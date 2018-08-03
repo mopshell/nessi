@@ -8,7 +8,10 @@
 # Copyright (C) 2018 Damien Pageot
 # ------------------------------------------------------------------
 """
-Class and methods for particle swarm optimization.
+Class and methods for genetic algorithm optimization.
+
+[1] Sambridge and Drijkoningen, 1992. Genetic algorithm in seismic waveform
+inversion, Geophys. J. Int., 109, 323-342.
 
 :copyright:
     Damien Pageot (nessi.develop@protonmail.com)
@@ -22,6 +25,7 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+import math
 
 class Genalg():
     """
@@ -68,16 +72,17 @@ class Genalg():
 
     def _power2(self, n):
         """
-        Search the closest power of 2 of an integer value.
+        Search the next highest power of 2 of an integer value.
+
+        :param n: "targeted" integer
         """
-        n2 = int(2)
-        while(n2 < n):
-            n2 *= int(2)
-        return n2
+        return int(math.pow(2, math.ceil(math.log(n, 2))))
 
     def _binstrlen(self, n):
         """
         Return the maximum lenght of a bit-string given n (power of 2).
+
+        :param n: number of discrete samples
         """
         npw = self._power2(n)
         l = 1./np.log(2.)*np.log(float(npw))

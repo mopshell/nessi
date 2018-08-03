@@ -1042,6 +1042,22 @@
     <span class="n">suobject</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">suobject</span>
+
+<span class="k">def</span> <span class="nf">sucreate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a SU object from a numpy array with a minimal header info.</span>
+
+<span class="sd">    :param data: a numpy array containing the data</span>
+<span class="sd">    :param dt: the time sampling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Declare SU object</span>
+    <span class="n">suobject</span> <span class="o">=</span> <span class="n">SUdata</span><span class="p">()</span>
+
+    <span class="c1"># Create the SU file</span>
+    <span class="n">suobject</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">suobject</span>
 </pre></div>
 
            </div>

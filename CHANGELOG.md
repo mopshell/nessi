@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *toroidalx*: toroidal topology excluding the particle to update for Swarm.update()
 - *init_particle*: force initialization to zero for arrays *current*, *velocity*, *history* and *misfit*
 - *grd_ds1* was renamed *grd_sib* (interp2d) *sibson1* and *sibson2* removed and replaced by *sibson* function only
+- *_power2* function is Genalg class for better performances
 
 ### Fixed
 - *kill* method for SUdata()
