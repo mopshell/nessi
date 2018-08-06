@@ -84,8 +84,13 @@ class Genalg():
 
         :param n: number of discrete samples
         """
+
+        # Get the next highest power of 2
         npw = self._power2(n)
+
+        # Calculate the maximum lenght of the bit-string
         l = 1./np.log(2.)*np.log(float(npw))
+        
         return int(round(l))
 
     def _encoding(self, x, lb, ub, nx):
