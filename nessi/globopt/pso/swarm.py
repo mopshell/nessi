@@ -312,6 +312,7 @@ class Swarm():
         :param c_2: value of the social parameter (default 2.05)
         :param topology: used topology (default 'full'): full, ring, ringx, toroidal, toroidalx
         :param ndim: number of particles in the first dimension if toroidal topology is used
+        :param pupd: parameter update probability
         """
 
         # Parse kwargs parameter list
@@ -319,6 +320,7 @@ class Swarm():
         omega = kwargs.get('c_0', 0.7298)
         topology = kwargs.get('topology', 'full')
         ndim = kwargs.get('ndim', 0)
+        pupd = kwargs.get('pupd', 1.0)
 
         if ctrl == 0:
             cog = kwargs.get('c_1', 2.05)
@@ -331,34 +333,36 @@ class Swarm():
         for indv in range(0, self.current.shape[0]):
             gbest = self.get_gbest(topology, indv, ndim)
             for ipts in range(0, self.pspace.shape[0]):
-                for ipar in range(0, self.pspace.shape[1]):
+                # Test if parameter will be updated
+                if np.random.random_sample() <= pupd:
+                    for ipar in range(0, self.pspace.shape[1]):
 
-                    # Get values
-                    current = self.current[indv, ipts, ipar]
-                    velocity = self.velocity[indv, ipts, ipar]
-                    history = self.history[indv, ipts, ipar]
+                        # Get values
+                        current = self.current[indv, ipts, ipar]
+                        velocity = self.velocity[indv, ipts, ipar]
+                        history = self.history[indv, ipts, ipar]
 
-                    # Update velocity vector
-                    self.velocity[indv, ipts, ipar] = omega*velocity\
-                                                + cog*np.random.random_sample()\
-                                                * (history-current)\
-                                                + soc*np.random.random_sample()\
-                                                * (gbest[ipts, ipar]-current)
+                        # Update velocity vector
+                        self.velocity[indv, ipts, ipar] = omega*velocity\
+                                                    + cog*np.random.random_sample()\
+                                                    * (history-current)\
+                                                    + soc*np.random.random_sample()\
+                                                    * (gbest[ipts, ipar]-current)
 
-                    # Check particle velocity
-                    if(np.abs(self.velocity[indv, ipts, ipar]) > self.pspace[ipts, ipar, 2]):
-                        self.velocity[indv, ipts, ipar] = \
-                            np.sign(self.velocity[indv, ipts, ipar])\
-                            * self.pspace[ipts, ipar, 2]
+                        # Check particle velocity
+                        if(np.abs(self.velocity[indv, ipts, ipar]) > self.pspace[ipts, ipar, 2]):
+                            self.velocity[indv, ipts, ipar] = \
+                                np.sign(self.velocity[indv, ipts, ipar])\
+                                * self.pspace[ipts, ipar, 2]
 
-                    # Update particle position
-                    self.current[indv, ipts, ipar] += self.velocity[indv, ipts, ipar]
+                        # Update particle position
+                        self.current[indv, ipts, ipar] += self.velocity[indv, ipts, ipar]
 
-                    # Check if particle is in parameter space
-                    if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
-                    if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]
+                        # Check if particle is in parameter space
+                        if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
+                        if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]
 
     def bbupdate(self, **kwargs):
         """
@@ -366,36 +370,40 @@ class Swarm():
 
         :param topology: used topology (default 'full'): full, ring, ringx, toroidal, toroidalx
         :param ndim: number of particles in the first dimension if toroidal topology is used
+        :param pupd: parameter update probability
         """
 
         # Parse kwargs parameter list
         topology = kwargs.get('topology', 'full')
         ndim = kwargs.get('ndim', 0)
+        pupd = kwargs.get('pupd', 1.0)
 
         # Update process
         for indv in range(0, self.current.shape[0]):
             gbest = self.get_gbest(topology, indv, ndim)
             for ipts in range(0, self.pspace.shape[0]):
-                for ipar in range(0, self.pspace.shape[1]):
+                # Test if parameter will be updated
+                if np.random.random_sample() <= pupd:
+                    for ipar in range(0, self.pspace.shape[1]):
 
-                    # Get values
-                    current = self.current[indv, ipts, ipar]
-                    velocity = self.velocity[indv, ipts, ipar]
-                    history = self.history[indv, ipts, ipar]
+                        # Get values
+                        current = self.current[indv, ipts, ipar]
+                        velocity = self.velocity[indv, ipts, ipar]
+                        history = self.history[indv, ipts, ipar]
 
-                    # Normal distribution parameters
-                    loc = (gbest[ipts, ipar]+history)/2.
-                    sca = np.abs(gbest[ipts, ipar]-history)
+                        # Normal distribution parameters
+                        loc = (gbest[ipts, ipar]+history)/2.
+                        sca = np.abs(gbest[ipts, ipar]-history)
 
-                    # Update position vector
-                    if sca > 0. :
-                        self.current[indv, ipts, ipar] = np.random.normal(loc=loc, scale=sca)
+                        # Update position vector
+                        if sca > 0. :
+                            self.current[indv, ipts, ipar] = np.random.normal(loc=loc, scale=sca)
 
-                    # Check if particle is in parameter space
-                    if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
-                    if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]
+                        # Check if particle is in parameter space
+                        if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
+                        if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]
 
 
     def fiupdate(self, **kwargs):
@@ -408,6 +416,7 @@ class Swarm():
         :param topology: used topology (default 'full'): full, ring, toroidal
         :param ndim: number of particles in the first dimension if toroidal topology is used
         :param weight: weight to apply to neighbors: flat, misfit
+        :param pupd: parameter update probability
         """
 
         # Parse kwargs parameter list
@@ -416,6 +425,7 @@ class Swarm():
         topology = kwargs.get('topology', 'full')
         ndim = kwargs.get('ndim', 0)
         weight = kwargs.get('weight', 'flat')
+        pupd = kwargs.get('pupd', 1.0)
 
         if ctrl == 0:
             acc = kwargs.get('c_1', 4.10)
@@ -427,43 +437,45 @@ class Swarm():
             # Get the neighbourhood of the particle
             neighborhood = self._get_neighbors(topology, indv, ndim)
             for ipts in range(0, self.pspace.shape[0]):
-                for ipar in range(0, self.pspace.shape[1]):
+                # Test if parameter will be updated
+                if np.random.random_sample() <= pupd:
+                    for ipar in range(0, self.pspace.shape[1]):
 
-                    # Get values
-                    current = self.current[indv, ipts, ipar]
-                    velocity = self.velocity[indv, ipts, ipar]
-                    history = self.history[indv, ipts, ipar]
+                        # Get values
+                        current = self.current[indv, ipts, ipar]
+                        velocity = self.velocity[indv, ipts, ipar]
+                        history = self.history[indv, ipts, ipar]
 
-                    # Update velocity vector
-                    nneighbor = len(neighborhood)
-                    w = np.zeros(nneighbor, dtype=np.float32)
-                    if weight == 'flat':
-                        w[:] = 1.
-                    if weight == 'misfit':
+                        # Update velocity vector
+                        nneighbor = len(neighborhood)
+                        w = np.zeros(nneighbor, dtype=np.float32)
+                        if weight == 'flat':
+                            w[:] = 1.
+                        if weight == 'misfit':
+                            for ineighbor in range(0, nneighbor):
+                                ii = neighborhood[ineighbor]
+                                w[ineighbor] = 1./self.misfit[ii]
+                        pnum = 0.
+                        pden = 0.
                         for ineighbor in range(0, nneighbor):
                             ii = neighborhood[ineighbor]
-                            w[ineighbor] = 1./self.misfit[ii]
-                    pnum = 0.
-                    pden = 0.
-                    for ineighbor in range(0, nneighbor):
-                        ii = neighborhood[ineighbor]
-                        r = np.random.random_sample()/float(nneighbor)
-                        pnum += r*acc*w[ineighbor]*(self.history[ii, ipts, ipar])
-                        pden += r*acc*w[ineighbor] #r*acc*w[ineighbor]
+                            r = np.random.random_sample()/float(nneighbor)
+                            pnum += r*acc*w[ineighbor]*(self.history[ii, ipts, ipar])
+                            pden += r*acc*w[ineighbor] #r*acc*w[ineighbor]
 
-                    self.velocity[indv, ipts, ipar] = omega*velocity+acc*((pnum/pden)-current)
+                            self.velocity[indv, ipts, ipar] = omega*velocity+acc*((pnum/pden)-current)
 
-                    # Check particle velocity
-                    if(np.abs(self.velocity[indv, ipts, ipar]) > self.pspace[ipts, ipar, 2]):
-                        self.velocity[indv, ipts, ipar] = \
-                            np.sign(self.velocity[indv, ipts, ipar])\
-                            * self.pspace[ipts, ipar, 2]
+                        # Check particle velocity
+                        if(np.abs(self.velocity[indv, ipts, ipar]) > self.pspace[ipts, ipar, 2]):
+                            self.velocity[indv, ipts, ipar] = \
+                                np.sign(self.velocity[indv, ipts, ipar])\
+                                * self.pspace[ipts, ipar, 2]
 
-                    # Update particle position
-                    self.current[indv, ipts, ipar] += self.velocity[indv, ipts, ipar]
+                        # Update particle position
+                        self.current[indv, ipts, ipar] += self.velocity[indv, ipts, ipar]
 
-                    # Check if particle is in parameter space
-                    if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
-                    if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
-                        self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]
+                        # Check if particle is in parameter space
+                        if(self.current[indv, ipts, ipar] < self.pspace[ipts, ipar, 0]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 0]
+                        if(self.current[indv, ipts, ipar] > self.pspace[ipts, ipar, 1]):
+                            self.current[indv, ipts, ipar] = self.pspace[ipts, ipar, 1]

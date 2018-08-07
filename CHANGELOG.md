@@ -20,8 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *grdinterp* functions for coarse to fine grid interpolation in modbuilder (cython reimplementation)
 - *fiupdate* in *Swarm()* for fully informed PSO update
 - *_get_neighbors* private function in *Swarm()* for the FIPS update
-- *bbupdate* in *Swarm()* for bare bone PSO update
-
+- *pupd* parameter update probability to all PSO update methods
+ 
 ### Modified
 - SU header structure now fits SU/CWP format (before SEG-Y rev 1)
 - remove useless SUdata variables
