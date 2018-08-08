@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *fiupdate* in *Swarm()* for fully informed PSO update
 - *_get_neighbors* private function in *Swarm()* for the FIPS update
 - *pupd* parameter update probability to all PSO update methods
- 
+
 ### Modified
 - SU header structure now fits SU/CWP format (before SEG-Y rev 1)
 - remove useless SUdata variables
@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 - *sibson2* (and *grd_ds2.c*) removed because useless (only *sibson1* now called *sibson* is kept)
+- *examples* folder is useless (examples in nessi.material repository)
 
 ## [0.1.2] - 2018-06-05
 
