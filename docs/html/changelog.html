@@ -90,10 +90,11 @@
 <li class="toctree-l1"><a class="reference internal" href="windowing_SU_data.html">Windowing SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filtering_SU_data.html">Filtering SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tapering_SU_data.html">Tapering SU data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="muting_SU_data.html">&nbsp;Muting SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="masw_SU_data.html">&nbsp;MASW from SU data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="masw_SU_data.html#normalize-the-dispersion-diagram">Normalize the dispersion diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gpdc_interface.html">Interface with Geopsy-gpdc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSO_basics.html">Particle Swarm Optimization: basics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dispersion_curve_inversion.html">Dispersion curve inversion using GPDC and PSO</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="nessi_modeling_swm.html">nessi.modeling.swm references</a></li>
@@ -192,7 +193,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.1.2] - YYYY-MM-DD
+## [0.2.0] - YYYY-MM-DD
+
+### Added
+- *resamp* method for SUdata()
+- *mute* method for SUdata()
+- *specfx* method for SUdata()
+- *specfk* method for SUdata()
+- *wiggle* method for SUdata()
+- Standard Genetic Algorithm implementation (mu, pc, pm)
+- Centroidal Voronoi tessellation option (McQueen algorithm) in *Swarm.init_particles*
+- *dispick*: a simple dispersion diagram picking method to get the *effective* dispersion curve
+- *suread* function (SUdata module) which declare SU object and read a SU file in the same time
+- *sucreate* function (SUdata module) which declare SU object and create a SU file in the same time
+- *grdinterp* functions for coarse to fine grid interpolation in modbuilder (cython reimplementation)
+- *fiupdate* in *Swarm()* for fully informed PSO update
+- *_get_neighbors* private function in *Swarm()* for the FIPS update
+- *bbupdate* in *Swarm()* for bare bone PSO update
+
+### Modified
+- SU header structure now fits SU/CWP format (before SEG-Y rev 1)
+- remove useless SUdata variables
+- *image* method of SUdata() to handle *masw*, *specfx* and *specfk* method outputs
+- *image* has now &#39;normal&#39; and &#39;masw&#39; style options (style=)
+- *image* has now interpolation option (see matplotlib.pyplot.imshow)
+- docstrings for SUdata methods
+- *masw* method output is now a SU file
+- *ringx*: ring topology excluding the particle to update for Swarm.update()
+- *toroidalx*: toroidal topology excluding the particle to update for Swarm.update()
+- *init_particle*: force initialization to zero for arrays *current*, *velocity*, *history* and *misfit*
+- *grd_ds1* was renamed *grd_sib* (interp2d) *sibson1* and *sibson2* removed and replaced by *sibson* function only
+
+### Fixed
+- *kill* method for SUdata()
+- use of header keywords in *masw* method for SUdata()
+- add some SU header keyword initializations in *create* for SUdata()
+
+### Removed
+- *sibson2* (and *grd_ds2.c*) removed because useless (only *sibson1* now called *sibson* is kept)
+
+## [0.1.2] - 2018-06-05
 
 ### Added
 - *CHANGELOG.md* in docs/
@@ -206,6 +246,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *nessi.globopt references* in docs
 - *MASW from SU data* tutorial in docs/
 - *masw* method in *SU/CWP references* chapter in docs/
+- *Dispersion curve inversion using GPDC and PSO* tutorial in docs/
 
 ### Modified
 - add __ZENODO__ DOI in the README.md
@@ -219,6 +260,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *pfilter* method of SUdata() can now handle axis 0 and 1
 - *masw* method of SUdata() can now return freq and vel arrays as expected
 - *masw* method of SUdata() now handles correctly the *scalco* keyword
+- obselete dependencies
 
 ## Removed
 - *2D seismic modeling* part in docs/ (temporary)

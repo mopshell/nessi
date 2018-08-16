@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - YYYY-MM-DD
+
+### Added
+- *resamp* method for SUdata()
+- *mute* method for SUdata()
+- *specfx* method for SUdata()
+- *specfk* method for SUdata()
+- *wiggle* method for SUdata()
+- Standard Genetic Algorithm implementation (mu, pc, pm)
+- Centroidal Voronoi tessellation option (McQueen algorithm) in *Swarm.init_particles*
+- *dispick*: a simple dispersion diagram picking method to get the *effective* dispersion curve
+- *suread* function (SUdata module) which declare SU object and read a SU file in the same time
+- *sucreate* function (SUdata module) which declare SU object and create a SU file in the same time
+- *grdinterp* functions for coarse to fine grid interpolation in modbuilder (cython reimplementation)
+- *fiupdate* in *Swarm()* for fully informed PSO update
+- *_get_neighbors* private function in *Swarm()* for the FIPS update
+- *pupd* parameter update probability to all PSO update methods
+
+### Modified
+- SU header structure now fits SU/CWP format (before SEG-Y rev 1)
+- remove useless SUdata variables
+- *image* method of SUdata() to handle *masw*, *specfx* and *specfk* method outputs
+- *image* has now 'normal' and 'masw' style options (style=)
+- *image* has now interpolation option (see matplotlib.pyplot.imshow)
+- docstrings for SUdata methods
+- *masw* method output is now a SU file
+- *ringx*: ring topology excluding the particle to update for Swarm.update()
+- *toroidalx*: toroidal topology excluding the particle to update for Swarm.update()
+- *init_particle*: force initialization to zero for arrays *current*, *velocity*, *history* and *misfit*
+- *grd_ds1* was renamed *grd_sib* (interp2d) *sibson1* and *sibson2* removed and replaced by *sibson* function only
+- *_power2* function is Genalg class for better performances
+
+### Fixed
+- *kill* method for SUdata()
+- use of header keywords in *masw* method for SUdata()
+- add some SU header keyword initializations in *create* for SUdata()
+
+### Removed
+- *sibson2* (and *grd_ds2.c*) removed because useless (only *sibson1* now called *sibson* is kept)
+- *examples* folder is useless (examples in nessi.material repository)
+
 ## [0.1.2] - 2018-06-05
 
 ### Added

@@ -90,6 +90,7 @@
 <li class="toctree-l1"><a class="reference internal" href="windowing_SU_data.html">Windowing SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="filtering_SU_data.html">Filtering SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tapering_SU_data.html">Tapering SU data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="muting_SU_data.html">&nbsp;Muting SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="masw_SU_data.html">&nbsp;MASW from SU data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gpdc_interface.html">Interface with Geopsy-gpdc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="PSO_basics.html">Particle Swarm Optimization: basics</a></li>
@@ -195,7 +196,15 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.chromoread">chromoread() (Genalg method)</a>
+</li>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.chromowrite">chromowrite() (Genalg method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="sucwp_references.html#nessi.io.SUdata.create">create() (SUdata method)</a>
+</li>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.crossover">crossover() (Genalg method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -205,11 +214,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_modeling_interfaces.html#nessi.modeling.interfaces.dispersion_curve_init">dispersion_curve_init() (in module nessi.modeling.interfaces)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_modeling_interfaces.html#nessi.modeling.interfaces.dispersion_curve_love">dispersion_curve_love() (in module nessi.modeling.interfaces)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_modeling_interfaces.html#nessi.modeling.interfaces.dispersion_curve_rayleigh">dispersion_curve_rayleigh() (in module nessi.modeling.interfaces)</a>
+</li>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.dispick">dispick() (SUdata method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -225,6 +236,10 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg">Genalg (class in nessi.globopt)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.get_gbest">get_gbest() (Swarm method)</a>
 </li>
   </ul></td>
@@ -235,12 +250,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="sucwp_references.html#nessi.io.SUdata.image">image() (SUdata method)</a>
 </li>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.init_chromosome">init_chromosome() (Genalg method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.init_particles">init_particles() (Swarm method)</a>
 </li>
-      <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.init_pspace">init_pspace() (Swarm method)</a>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.init_pspace">init_pspace() (Genalg method)</a>
+
+      <ul>
+        <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.init_pspace">(Swarm method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -259,11 +280,15 @@
 </li>
       <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.modbuo">modbuo() (in module nessi.modeling.swm)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.modext">modext() (in module nessi.modeling.swm)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.modlame">modlame() (in module nessi.modeling.swm)</a>
+</li>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.mutation">mutation() (Genalg method)</a>
+</li>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.mute">mute() (SUdata method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -272,6 +297,12 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="nessi_globopt_references.html#module-nessi.globopt">nessi.globopt (module)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="sucwp_references.html#module-nessi.io">nessi.io (module)</a>
+</li>
+      <li><a href="nessi_modeling_interfaces.html#module-nessi.modeling.interfaces">nessi.modeling.interfaces (module)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -295,6 +326,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.resamp">resamp() (SUdata method)</a>
+</li>
       <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.ricker">ricker() (in module nessi.modeling.swm)</a>
 </li>
   </ul></td>
@@ -303,10 +336,14 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.srcspread">srcspread() (in module nessi.modeling.swm)</a>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.specfk">specfk() (SUdata method)</a>
+</li>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.specfx">specfx() (SUdata method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="nessi_modeling_swm.html#nessi.modeling.swm.srcspread">srcspread() (in module nessi.modeling.swm)</a>
+</li>
       <li><a href="sucwp_references.html#nessi.io.SUdata">SUdata (class in nessi.io)</a>
 </li>
       <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm">Swarm (class in nessi.globopt)</a>
@@ -320,23 +357,33 @@
       <li><a href="sucwp_references.html#nessi.io.SUdata.taper">taper() (SUdata method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.tournament">tournament() (Genalg method)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.update">update() (Swarm method)</a>
+      <li><a href="nessi_globopt_references.html#nessi.globopt.Genalg.update">update() (Genalg method)</a>
+
+      <ul>
+        <li><a href="nessi_globopt_references.html#nessi.globopt.Swarm.update">(Swarm method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="sucwp_references.html#nessi.io.SUdata.wind">wind() (SUdata method)</a>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.wiggle">wiggle() (SUdata method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="sucwp_references.html#nessi.io.SUdata.wind">wind() (SUdata method)</a>
+</li>
       <li><a href="sucwp_references.html#nessi.io.SUdata.write">write() (SUdata method)</a>
 </li>
   </ul></td>
