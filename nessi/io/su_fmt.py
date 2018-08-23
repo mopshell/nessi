@@ -506,7 +506,7 @@ class SUdata():
         # Close the binary file
         file.close()
 
-    def masw(self, vmin=0., vmax=1000., dv=5., fmin=1., fmax=100.):
+    def masw(self, vmin=0., vmax=1000., dv=5., fmin=1., fmax=100., whitening=False):
         """
         Calculate the dispersion diagram using MASW method.
         Return the dispersion diagram, the velocity vector and the frequency vector.
@@ -516,6 +516,7 @@ class SUdata():
         :param dv: velocity sampling
         :param fmin: minimum frequency to consider
         :param fmax: maximum frequency to consider
+        :param whitening: whitening traces before process (default False)
         """
 
         # Conversion to cython for performance (?)
@@ -582,7 +583,10 @@ class SUdata():
                     # Calculate the phase
                     phase = complex(0., 1.)*2.*np.pi*offset[ir]*freq[iw+iwmin]/vel[iv]
                     # Stack over frequencies and receivers
-                    tmp[iw] += gobs[ir, iw+iwmin]*np.exp(phase)
+                    if whitening == False:
+                        tmp[iw] += gobs[ir, iw+iwmin]*np.exp(phase)
+                    else:
+                        tmp[iw] += gobs[ir, iw+iwmin]/np.amax(np.abs(gobs[:, iw+iwmin]))*np.exp(phase)
             # Stack over velocities
             disp[iv,:] += np.abs(tmp[:])
 
