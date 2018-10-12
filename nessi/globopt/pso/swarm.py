@@ -320,7 +320,7 @@ class Swarm():
         omega = kwargs.get('c_0', 0.7298)
         topology = kwargs.get('topology', 'full')
         ndim = kwargs.get('ndim', 0)
-        pupd = kwargs.get('pupd', 1.0)
+        pupd = kwargs.get('pupd', 2.0)
 
         if ctrl == 0:
             cog = kwargs.get('c_1', 2.05)
