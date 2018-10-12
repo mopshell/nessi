@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.2.2] - 2018-10-DD
+## [0.2.1] - 2018-10-12
 
 ### Added
 - test functions in *test_swarm* for *update* method with *pupd* parameter
@@ -12,13 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Modified
 - test suite for particle swarm optimization (attempted output update)
-
-## [0.2.1] - 2018-09-24
-
-### Modified
 - *masw* method of SUdata() has now the *whitening* option
 
-## [0.2.0] - 2018-08-DD
+## [0.2.0] - 2018-08-16
 
 ### Added
 - *resamp* method for SUdata()
