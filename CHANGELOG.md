@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Modified
 - vectorization of FD functions in *swm_deriv.f90*
+- loop vectorization in *swm_marching.f90*
 
 ## [0.2.1] - 2018-10-12
 

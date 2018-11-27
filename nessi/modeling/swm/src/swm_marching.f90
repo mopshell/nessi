@@ -175,20 +175,27 @@ subroutine evolution(n1, n2, h, npml, nt, nts, ntsnap, dt, nrec, srctype, &
      ! implement Dirichlet boundary conditions on the four edges of the grid
 
      !# PRESSURE
-     do i2=1,n2e-1
-        do i1=2,n1e-1
-           press(i1, i2) = (-lbmu(i1, i2)/h)*(ux(i1,i2)-ux(i1,i2-1) &
-                +uz(i1,i2)-uz(i1-1,i2))
-        enddo
-     enddo
+     !do i2=1,n2e-1
+    !    do i1=2,n1e-1
+    !       press(i1, i2) = (-lbmu(i1, i2)/h)*(ux(i1,i2)-ux(i1,i2-1) &
+    !            +uz(i1,i2)-uz(i1-1,i2))
+    !    enddo
+     !enddo
+
+     press(2:n1e-1,1:n2e-1) = (-lbmu(2:n1e-1,1:n2e-1)/h)* &
+                (ux(2:n1e-1,1:n2e-1)-ux(2:n1e-1,1:n2e-1) &
+                +uz(2:n1e-1,1:n2e-1)-uz(2:n1e-1,1:n2e-1))
 
      !# TXX -- TZZ
      if(isurf == 1)then
-        do i2=2,n2e
-           uz(npml, i2) = uz(npml+1, i2)+&
-                lb0(npml+1, i2)/lbmu(npml+1,i2)*&
-                (ux(npml+1,i2)-ux(npml+1,i2-1))
-        enddo
+        !do i2=2,n2e
+        !   uz(npml, i2) = uz(npml+1, i2)+&
+        !        lb0(npml+1, i2)/lbmu(npml+1,i2)*&
+        !        (ux(npml+1,i2)-ux(npml+1,i2-1))
+        !enddo
+        uz(npml, 2:n2e) = uz(npml+1, 2:n2e)+&
+                lb0(npml+1, 2:n2e)/lbmu(npml+1,2:n2e)*&
+                (ux(npml+1,2:n2e)-ux(npml+1,1:n2e-1))
      endif
      call dxbackward(ux, n1e, n2e, d2)
      call dzbackward(uz, n1e, n2e, npml, d1, isurf)
