@@ -18,6 +18,12 @@ python module swmwrap ! in
             integer, optional,intent(in),check(shape(f,1)==n2),depend(f) :: n2=shape(f,1)
             real(kind=4) dimension(n1,n2),intent(out),depend(n1,n2) :: d
         end subroutine dxforward
+        subroutine dxforwardb(f,n1,n2,d) ! in :swmwrap:src/swm_deriv.f90
+            real(kind=4) dimension(n1,n2),intent(in) :: f
+            integer, optional,intent(in),check(shape(f,0)==n1),depend(f) :: n1=shape(f,0)
+            integer, optional,intent(in),check(shape(f,1)==n2),depend(f) :: n2=shape(f,1)
+            real(kind=4) dimension(n1,n2),intent(out),depend(n1,n2) :: d
+        end subroutine dxforwardb
         subroutine dxbackward(f,n1,n2,d) ! in :swmwrap:src/swm_deriv.f90
             real(kind=4) dimension(n1,n2),intent(in) :: f
             integer, optional,intent(in),check(shape(f,0)==n1),depend(f) :: n1=shape(f,0)
