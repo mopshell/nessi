@@ -16,6 +16,8 @@ from .swmwrap import pmlmod
 from .swmwrap import ricker
 from .swmwrap import srcspread
 from .swmwrap import evolution
+from .swmwrap import dxforward
+from .swmwrap import dxforwardb
 
 if __name__ == '__main__':
     import doctest
