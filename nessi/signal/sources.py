@@ -48,27 +48,36 @@ def lsrcinv(dcal, scal, dobs, axis=0):
     # Fast Fourier transform
     gobs = np.fft.rfft(dobs, axis=axis)
     gcal = np.fft.rfft(dcal, axis=axis)
-    gscal = np.fft.rfft(scal, axis=axis)
+    gscal = np.fft.rfft(scal)
     nfft = np.size(gobs, axis=axis)
 
     # Linear source inversion
     num = np.zeros(nfft, dtype=np.complex64)
     den = np.zeros(nfft, dtype=np.complex64)
+
     if ntrac == 1:
         for iw in range(0, nfft):
             num[iw] += gcal[iw]*np.conj(gobs[iw])
             den[iw] += gcal[iw]*np.conj(gcal[iw])
     else:
-        for iw in range(0, nfft):
-            for itrac in range(0, ntrac):
-                num[iw] += gcal[iw][itrac]*np.conj(gobs[iw][itrac])
-                den[iw] += gcal[iw][itrac]*np.conj(gcal[iw][itrac])
+        if axis == 0:
+            for iw in range(0, nfft):
+                for itrac in range(0, ntrac):
+                    num[iw] += gcal[iw][itrac]*np.conj(gobs[iw][itrac])
+                    den[iw] += gcal[iw][itrac]*np.conj(gcal[iw][itrac])
+        if axis == 1:
+            for iw in range(0, nfft):
+                for itrac in range(0, ntrac):
+                    num[iw] += gcal[itrac][iw]*np.conj(gobs[itrac][iw])
+                    den[iw] += gcal[itrac][iw]*np.conj(gcal[itrac][iw])
 
     # Estimated source
     gsinv = np.zeros(nfft, dtype=np.complex64)
+    gcorrector = np.zeros(nfft, dtype=np.complex64)
     for iw in range(0, nfft):
         if den[iw] != complex(0., 0.):
             gsinv[iw] = gscal[iw]*np.conj(num[iw]/den[iw])
+            gcorrector[iw] = num[iw]/den[iw]
     sinv = np.fft.irfft(gsinv, n=ns)
 
-    return sinv
+    return sinv, gcorrector
