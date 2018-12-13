@@ -22,6 +22,8 @@ from __future__ import print_function
 
 # Import nessi.io classes and functions
 from .su_fmt import SUdata
+from .su_fmt import sucreate
+from .su_fmt import susrcinv
 
 if __name__ == '__main__':
     import doctest

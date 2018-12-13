@@ -29,7 +29,7 @@ from nessi.signal import time_window
 from nessi.signal import space_window
 from nessi.signal import taper1d
 from nessi.signal import sin2filter
-
+from nessi.signal import lsrcinv
 
 class SUdata():
     """
@@ -466,25 +466,48 @@ class SUdata():
         Create a minimal SU file
         """
         # Get size of data
-        nr = data.shape[0]
-        ns = data.shape[1]
+        if data.ndim == 1:
+            ns = np.size(data)
+            nr = 1
+        if data.ndim == 2:
+            nr = data.shape[0]
+            ns = data.shape[1]
 
         # Create
-        for ir in range(0, nr):
-            self.header.append(np.zeros(1, dtype=self.sutype))
-            self.header[ir]['tracl'] = int(ir+1)
-            self.header[ir]['tracf'] = int(ir+1)
-            self.header[ir]['ns'] = ns
-            self.header[ir]['dt'] = int(dt*1000000.)
-            self.header[ir]['sx'] = 0
-            self.header[ir]['sy'] = 0
-            self.header[ir]['selev'] = 0
-            self.header[ir]['gx'] = int(ir+1)
-            self.header[ir]['gy'] = 0
-            self.header[ir]['gelev'] = 0
-            self.header[ir]['scalco'] = 1
-            self.header[ir]['scalel'] = 1
-            self.trace.append(data[ir,:])
+        if data.ndim == 1:
+            #self.header.append(np.zeros(1, dtype=self.sutype))
+            header = np.zeros(1, dtype=self.sutype)
+            header['tracl'] = int(1)
+            header['tracf'] = int(1)
+            header['ns'] = ns
+            header['dt'] = int(dt*1000000.)
+            header['sx'] = 0
+            header['sy'] = 0
+            header['selev'] = 0
+            header['gx'] = int(1)
+            header['gy'] = 0
+            header['gelev'] = 0
+            header['scalco'] = 1
+            header['scalel'] = 1
+            self.header = header[:]
+            self.trace = data[:]
+        if data.ndim == 2:
+            for ir in range(0, nr):
+                self.header.append(np.zeros(1, dtype=self.sutype))
+                self.header[ir]['tracl'] = int(ir+1)
+                self.header[ir]['tracf'] = int(ir+1)
+                self.header[ir]['ns'] = ns
+                self.header[ir]['dt'] = int(dt*1000000.)
+                self.header[ir]['sx'] = 0
+                self.header[ir]['sy'] = 0
+                self.header[ir]['selev'] = 0
+                self.header[ir]['gx'] = int(ir+1)
+                self.header[ir]['gy'] = 0
+                self.header[ir]['gelev'] = 0
+                self.header[ir]['scalco'] = 1
+                self.header[ir]['scalel'] = 1
+                self.trace.append(data[ir,:])
+
         self.header = np.array(self.header)
         self.trace = np.array(self.trace)
 
@@ -493,15 +516,28 @@ class SUdata():
         Write SU file on disk
         """
 
+        # Get parameters
+        if self.trace.ndim == 1:
+            ntrac = 1
+        if self.trace.ndim == 2:
+            ntrac = np.size(self.trace, axis=0)
+
+        print(ntrac)
         # Open binary file
         file = open(filename, 'wb')
 
         # Loop over traces
-        for ir in range(0, len(self.header)):
+        if ntrac == 1:
             # Write header
-            file.write(self.header[ir])
+            file.write(self.header)
             # Write data
-            file.write(self.trace[ir,:])
+            file.write(self.trace)
+        else:
+            for ir in range(0, ntrac):
+                # Write header
+                file.write(self.header[ir])
+                # Write data
+                file.write(self.trace[ir,:])
 
         # Close the binary file
         file.close()
@@ -865,6 +901,51 @@ class SUdata():
         dobsspecfk.header[:]['trid'] = 122 # Amplitude of complex trace from 0 to Nyquist
 
         return dobsspecfk
+
+def susrcinv(dcal, scal, dobs):
+    """
+    Linear source inversion using SU files only.
+    Return the estimated source and the corrected data in SU format.
+
+    :param dcal: calculated data in SU format
+    :param dobs: observed data in SU format
+    :param scal: source used for calculated data in SU format
+    """
+
+    # SU parameters
+    ns = dcal.header['ns'][0]
+    dt = dcal.header['dt'][0]/1000000.
+
+    # Get the number of traces
+    if dobs.trace.ndim == 1:
+        ntrac = 1
+        naxis = 0
+    if dobs.trace.ndim == 2:
+        ntrac = np.size(dobs.trace, axis=0)
+        naxis = 1
+
+    # Linear source inversion
+    srcest, corrector = lsrcinv(dcal.trace, scal.trace, dobs.trace, axis=naxis)
+
+    # Calculated data correction
+    gcal = np.fft.rfft(dcal.trace, axis=naxis)
+    nw = np.size(gcal, axis=naxis)
+    if naxis == 0:
+        gcorrected = np.zeros((nw), dtype=np.complex64)
+        gcorrected[:] = gcal[:]*np.conj(corrector[:])
+        dcorrected = np.fft.irfft(gcorrected, n=ns, axis=0)
+    if naxis == 1:
+        gcorrected = np.zeros((ntrac, nw), dtype=np.complex64)
+        for itrac in range(0, ntrac):
+            gcorrected[itrac, :] = gcal[itrac, :]*np.conj(corrector[:])
+        dcorrected = np.float32(np.fft.irfft(gcorrected, n=ns, axis=1))
+
+    # Create outputs
+    print(srcest.dtype)
+    susrcest = sucreate(srcest, dt)
+    sucorrected = sucreate(dcorrected, dt)
+
+    return susrcest, sucorrected
 
 def suread(filename):
     """

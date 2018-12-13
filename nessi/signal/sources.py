@@ -78,6 +78,6 @@ def lsrcinv(dcal, scal, dobs, axis=0):
         if den[iw] != complex(0., 0.):
             gsinv[iw] = gscal[iw]*np.conj(num[iw]/den[iw])
             gcorrector[iw] = num[iw]/den[iw]
-    sinv = np.fft.irfft(gsinv, n=ns)
+    sinv = np.float32(np.fft.irfft(gsinv, n=ns))
 
     return sinv, gcorrector
