@@ -129,14 +129,37 @@ class Disp():
                     kt = (2.*np.pi*self.freq[iw]/self.vs[nl-il-1])
                     ke = (2.*np.pi*self.freq[iw]/self.vel[iv])
                     # Delay
-                    nu = complex(ke*ke-kt*kt, 0.)
+                    nu = np.sqrt(np.abs(ke*ke-kt*kt))
+                    mu = self.ro[nl-il-1]*self.vs[nl-il-1]**2
                     if il == 0: #Bottom layer
-                        R = Tmatrix(np.sqrt(nu), self.vs[nl-il-1], self.ro[nl-il-1], self.hl[nl-il-1])
+                        #R = Tmatrix(np.sqrt(nu), self.vs[nl-il-1], self.ro[nl-il-1], self.hl[nl-il-1])
+                        l21t = 0. # complex(0., 0.)
+                        L22t = 0. #complex(0., 0.)
+                        if nu != 0.: #complex(0., 0.):
+                            l21t = nu*self.ro[nl-il-1]/(2.*nu*self.ro[nl-il-1])
+                            l22t = 1./(2.*nu*self.ro[nl-il-1]*self.vs[nl-il-1]**2)
                     else:
-                        G = Gmatrix(np.sqrt(nu), self.vs[nl-il-1], self.ro[nl-il-1], self.hl[nl-il-1])
-                        R = np.matmul(R, G)
+                        if ke < kt:
+                            G11 = np.cos(nu*self.hl[nl-il-1])
+                            G12 = np.sin(nu*self.hl[nl-il-1])/(nu*mu)
+                            G21 = -np.sin(nu*self.hl[nl-il-1])*(nu*mu)
+                            G22 = np.cos(nu*self.hl[nl-il-1])
+                        elif ke == kt:
+                            G11 = 1.
+                            G12 = 0. #self.hl[nl-il-1]/mu
+                            G21 = 0.
+                            G22 = 1.
+                        else:
+                            G11 = (1.+np.exp(-2.*nu*self.hl[nl-il-1]))/2.
+                            G12 = (1.-np.exp(-2.*nu*self.hl[nl-il-1]))/(2.*nu*mu)
+                            G12 = (1.-np.exp(-2.*nu*self.hl[nl-il-1]))/2.*(nu*mu)
+                            G22 = (1.+np.exp(-2.*nu*self.hl[nl-il-1]))/2.
+                        l21t = l21*G11+l22*G21
+                        l22t = l21*G12+l22*G22
+                    l21 = l21t
+                    l22 = l22t
                 # Store result in dispersion diagram array
-                self.diagram[iw, iv] = np.real(R[1, 0])
+                self.diagram[iw, iv] = l21
 
     def rayleighdiag(self):
         """

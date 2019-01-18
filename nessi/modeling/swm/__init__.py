@@ -18,9 +18,9 @@ from .swmwrap import srcspread
 from .swmwrap import evolution
 from .swmwrap import dxforward
 
-from .cmodel import modext2
-from .cmodel import modbuo2
-from .cmodel import modlame2
+#from .cmodel import modext2
+#from .cmodel import modbuo2
+#from .cmodel import modlame2
 
 if __name__ == '__main__':
     import doctest
