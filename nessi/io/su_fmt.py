@@ -451,13 +451,13 @@ class SUdata():
 
         # Taper in space
         if(tr1 !=0 or tr2 !=0):
-            dobstaper.trace = taper1d(dobstaper.trace, tr1, tr2, min, type, axis=0)
+            dobstaper.trace = taper1d(self.trace, tr1, tr2, min, type, axis=0)
 
         # Taper in time
         if(tbeg !=0. or tend !=0.):
             ntap1 = int(tbeg/1000./dt)
             ntap2 = int(tend/1000./dt)
-            dobstaper.trace = taper1d(dobstaper.trace, ntap1, ntap2, min, type, axis=1)
+            dobstaper.trace = taper1d(self.trace, ntap1, ntap2, min, type, axis=1)
 
         return dobstaper
 
