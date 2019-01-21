@@ -22,30 +22,7 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-
-def Tmatrix(nu, vs, ro, z):
-    """
-    Calculate the Tn matrix
-    """
-    T = np.zeros((2, 2), dtype=np.complex64)
-    T[0, 0] = nu*ro*np.exp(nu*z)
-    T[0, 1] = -np.exp(nu*z)/(vs*vs)
-    T[1, 0] = nu*ro*np.exp(-nu*z)
-    T[1, 1] = 1./(vs*vs)*np.exp(-nu*z)
-    return 1./(2.*nu*ro)*T
-
-def Gmatrix(nu, vs, ro, zl):
-    """
-    Calculate the G matrix
-    """
-    G = np.zeros((2, 2), dtype=np.complex64)
-    A = nu*zl
-    mu = ro*vs*vs
-    G[0, 0] = np.cosh(A) #(1.+np.exp(-2.*A))/2. #np.exp(A)*(1.+np.exp(-2.*A))/2.
-    G[0, 1] = 1./(nu*mu)*np.sinh(A) #1./(nu*mu)*(1.-np.exp(-2.*A))/2. #np.exp(A)*(1.-np.exp(-2.*A))/2.
-    G[1, 0] = nu*mu*np.sinh(A) #1./(nu*mu)*np.sinh(A) #1./(nu*mu)*(1.-np.exp(-2.*A))/2. #np.exp(A)*(1.-np.exp(-2.*A))/2.
-    G[1, 1] = G[0, 0] #np.exp(A)*(1.+np.exp(-2.*A))/2.
-    return G
+from .rootfinding import vrayleigh
 
 class Disp():
     """
@@ -106,6 +83,111 @@ class Disp():
         self.vel = np.linspace(vmin, vmax, nv)
         self.diaginit = 1
 
+    def lovedet(self, f, v):
+        """
+        Calculate L21(z0) component for a given frequency-velocity couple
+        """
+        nl = len(self.vp)
+
+        # Loop over layers
+        for il in range(0, nl):
+
+            # Wavenumbers
+            kt = (2.*np.pi*f/self.vs[nl-il-1])
+            ke = (2.*np.pi*f/v)
+
+            # Delay
+            nu = np.sqrt(np.abs(ke*ke-kt*kt))
+            mu = self.ro[nl-il-1]*self.vs[nl-il-1]**2
+
+            # Initialize l21 & l22
+            l21t = 0.
+            l22t = 0.
+
+            # Bottom layer
+            if il == 0: #Bottom layer
+                if nu != 0.: #complex(0., 0.):
+                    l21t = 1./2. #nu*self.ro[nl-il-1]/(2.*nu*self.ro[nl-il-1])
+                    l22t = 1./(2.*nu*mu) #1./(2.*nu*self.ro[nl-il-1]*self.vs[nl-il-1]**2)
+            # Layer
+            else:
+                A = nu*self.hl[nl-il-1]
+                # Pure imaginary
+                if ke < kt:
+                    G11 = np.cos(A)
+                    G12 = np.sin(A)/(nu*mu)
+                    G21 = -np.sin(A)*(nu*mu)
+                    G22 = np.cos(A)
+                # Zero
+                elif ke == kt:
+                    G11 = 1.
+                    G12 = 0.
+                    G21 = 0.
+                    G22 = 1.
+                # Pure real
+                else:
+                    G11 = (1.+np.exp(-2.*A))/2.
+                    G12 = (1.-np.exp(-2.*A))/(2.*nu*mu)
+                    G21 = -(1.-np.exp(-2.*A))/2.*(nu*mu)
+                    G22 = (1.+np.exp(-2.*A))/2.
+
+                # Calculate temporary l21 & l22
+                l21t = l21*G11+l22*G21
+                l22t = l21*G12+l22*G22
+
+            # Assign l21 & l22
+            l21 = l21t
+            l22 = l22t
+
+        return l21
+
+    def lovecurves(self):
+        """
+        Estimate theoretical Love wave dispersion curves.
+        """
+
+        # Initializations
+        nw = len(self.freq)
+        nl = len(self.vp)
+
+        # Initialize
+        self.curves = np.zeros((nw), dtype=np.float32)
+
+        # Polarity under fundamental mode
+        f0 = 2.*np.pi*50. #1./(2.*np.pi)
+        v0 = np.amin(self.vs/1.05)
+        det0 = self.lovedet(f0, v0)
+        polarity0 = np.sign(det0)
+
+        # Estimate dv
+        imin = np.argmin(self.vs)
+        vr = vrayleigh(self.vp[imin], self.vs[imin])
+        dv = (self.vs[imin]-vr)/(2.*self.vs[imin])
+
+        # Starting frequency and velocity
+        f1 = f0
+        v1 = v0
+
+        polarity1 = polarity0
+        while polarity1 == polarity0:
+            # Increase velocity
+            v1 += dv
+            # Calculate determinant
+            det1 = self.lovedet(f0, v1)
+            # Get polarity
+            polarity1 = np.sign(det1)
+        v0 = v1-dv
+
+        # Estimate Love wave velocity using the secante method
+        while(np.abs(v0-v1)>0.001):
+            fx0 = self.lovedet(f0, v0)
+            fx1 = self.lovedet(f0, v1)
+            v = v1-fx1*(v1-v0)/(fx1-fx0)
+            v0 = v1
+            v1 = v
+
+        return v0, v, v1
+
     def lovediag(self):
         """
         Calculate theoretical Love wave dispersion diagram.
@@ -123,43 +205,8 @@ class Disp():
         for iw in range(0, nw):
             # Loop over velocities
             for iv in range(0, nv):
-                # Loop over layers
-                for il in range(0, nl):
-                    # Wavenumbers
-                    kt = (2.*np.pi*self.freq[iw]/self.vs[nl-il-1])
-                    ke = (2.*np.pi*self.freq[iw]/self.vel[iv])
-                    # Delay
-                    nu = np.sqrt(np.abs(ke*ke-kt*kt))
-                    mu = self.ro[nl-il-1]*self.vs[nl-il-1]**2
-                    if il == 0: #Bottom layer
-                        #R = Tmatrix(np.sqrt(nu), self.vs[nl-il-1], self.ro[nl-il-1], self.hl[nl-il-1])
-                        l21t = 0. # complex(0., 0.)
-                        L22t = 0. #complex(0., 0.)
-                        if nu != 0.: #complex(0., 0.):
-                            l21t = nu*self.ro[nl-il-1]/(2.*nu*self.ro[nl-il-1])
-                            l22t = 1./(2.*nu*self.ro[nl-il-1]*self.vs[nl-il-1]**2)
-                    else:
-                        if ke < kt:
-                            G11 = np.cos(nu*self.hl[nl-il-1])
-                            G12 = np.sin(nu*self.hl[nl-il-1])/(nu*mu)
-                            G21 = -np.sin(nu*self.hl[nl-il-1])*(nu*mu)
-                            G22 = np.cos(nu*self.hl[nl-il-1])
-                        elif ke == kt:
-                            G11 = 1.
-                            G12 = 0. #self.hl[nl-il-1]/mu
-                            G21 = 0.
-                            G22 = 1.
-                        else:
-                            G11 = (1.+np.exp(-2.*nu*self.hl[nl-il-1]))/2.
-                            G12 = (1.-np.exp(-2.*nu*self.hl[nl-il-1]))/(2.*nu*mu)
-                            G12 = (1.-np.exp(-2.*nu*self.hl[nl-il-1]))/2.*(nu*mu)
-                            G22 = (1.+np.exp(-2.*nu*self.hl[nl-il-1]))/2.
-                        l21t = l21*G11+l22*G21
-                        l22t = l21*G12+l22*G22
-                    l21 = l21t
-                    l22 = l22t
                 # Store result in dispersion diagram array
-                self.diagram[iw, iv] = l21
+                self.diagram[iw, iv] = self.lovedet(self.freq[iw], self.vel[iv])
 
     def rayleighdiag(self):
         """
