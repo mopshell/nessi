@@ -34,7 +34,7 @@ class Disp():
         Initialization
         """
         self.initialization = 1
-
+        self.nmodes = 1
 
     def initmodel(self, nl):
         """
@@ -151,42 +151,54 @@ class Disp():
         nl = len(self.vp)
 
         # Initialize
-        self.curves = np.zeros((nw), dtype=np.float32)
+        self.curves = np.zeros((nw, self.nmodes), dtype=np.float32)
 
-        # Polarity under fundamental mode
-        f0 = 2.*np.pi*50. #1./(2.*np.pi)
-        v0 = np.amin(self.vs/1.05)
-        det0 = self.lovedet(f0, v0)
-        polarity0 = np.sign(det0)
+        # Loop over frequencies (from high to low)
+        for iw in range(0, nw):
+            # Polarity under fundamental mode
+            f0 = self.freq[nw-iw-1] #1./(2.*np.pi)
+            v0 = np.amin(self.vs/1.05)
+            det0 = self.lovedet(f0, v0)
+            polarity0 = np.sign(det0)
 
-        # Estimate dv
-        imin = np.argmin(self.vs)
-        vr = vrayleigh(self.vp[imin], self.vs[imin])
-        dv = (self.vs[imin]-vr)/(2.*self.vs[imin])
+            # Estimate dv
+            imin = np.argmin(self.vs)
+            vr = vrayleigh(self.vp[imin], self.vs[imin])
+            dv = (self.vs[imin]-vr)/(2.*self.vs[imin])
 
-        # Starting frequency and velocity
-        f1 = f0
-        v1 = v0
+            # Loop over modes
+            for imode in range(0, self.nmodes):
+                # Starting velocity
+                v1 = v0
 
-        polarity1 = polarity0
-        while polarity1 == polarity0:
-            # Increase velocity
-            v1 += dv
-            # Calculate determinant
-            det1 = self.lovedet(f0, v1)
-            # Get polarity
-            polarity1 = np.sign(det1)
-        v0 = v1-dv
+                polarity1 = polarity0
+                while polarity1 == polarity0:
+                    # Increase velocity
+                    v1 += dv
+                    # Calculate determinant
+                    det1 = self.lovedet(f0, v1)
+                    # Get polarity
+                    polarity1 = np.sign(det1)
+                v0 = v1-dv
+                print(iw, imode, v0, polarity0, v1, polarity1)
 
-        # Estimate Love wave velocity using the secante method
-        while(np.abs(v0-v1)>0.001):
-            fx0 = self.lovedet(f0, v0)
-            fx1 = self.lovedet(f0, v1)
-            v = v1-fx1*(v1-v0)/(fx1-fx0)
-            v0 = v1
-            v1 = v
+                # Estimate Love wave velocity using the secante method
+                iter = 0
+                while(np.abs(v0-v1)>dv/2.):
+                    #print(iter, imode, iw, v0, v1)
+                    fx0 = self.lovedet(f0, v0)
+                    fx1 = self.lovedet(f0, v1)
+                    v = v1-fx1*(v1-v0)/(fx1-fx0)
+                    v0 = v1
+                    v1 = v
+                    iter += 1
 
-        return v0, v, v1
+                polarity0 = polarity1
+                if np.sign(fx0) == np.sign(fx1):
+                    self.curves[nw-iw-1, imode] = 0.
+                else:
+                    self.curves[nw-iw-1, imode] = v
+
 
     def lovediag(self):
         """
