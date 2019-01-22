@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - linear source inversion *lsrcinv* in *nessi.signal*
 
+### Modified
+- *pfilter* in *SUdata()* class
+- *sin2filter* function in *filtering.py*
+
 ## [0.2.2] - 2018-12-05
 
 ### Modified

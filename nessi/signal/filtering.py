@@ -73,10 +73,10 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     # Integer filter frequencies
     intfreq = np.zeros(npoly, dtype=np.int)
     for ipoly in range(0, npoly):
-        intfreq[ipoly] = np.argmin(np.abs(ftmp-freq[ipoly]))
+        intfreq[ipoly] = int(freq[ipoly]/df) #np.argmin(np.abs(ftmp-freq[ipoly]))
 
     # Initialize the polygonal filter with sin^2 tapering
-    pfilt = np.zeros(nfft, dtype=np.complex64)
+    pfilt = np.zeros(nfft, dtype=np.float32)
 
     # From 0 to first filter frequency
     for ifreq in range(0, intfreq[0]):
@@ -87,17 +87,17 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
 
         if amps[ipoly] < amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
-                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly]+2)
-                s = np.sin(c*float(ifreq-intfreq[ipoly]+1))
+                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly]) #+2)
+                s = np.sin(c*float(ifreq-intfreq[ipoly])) #+1))
                 a = amps[ipoly+1]-amps[ipoly]
                 pfilt[ifreq] = amps[ipoly]+a*s*s
 
         if amps[ipoly] > amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
-                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly]+2)
-                s = np.sin(c*float(intfreq[ipoly]-ifreq+1))
+                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly])#+2)
+                s = np.sin(c*float(intfreq[ipoly]-ifreq)) #+1))
                 a = amps[ipoly]-amps[ipoly+1]
-                pfilt[ifreq] = amps[ipoly+1]+a*s*s
+                pfilt[ifreq] = amps[ipoly]-a*s*s
 
         if amps[ipoly] == amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
@@ -106,7 +106,7 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     # From the last filter frequency to the last frequency
     for ifreq in range(intfreq[-1], nfft):
         pfilt[ifreq] = amps[-1]
-
+        
     # Apply filter
     if np.ndim(dobs) == 1:
         gobsfilter[:] = gobs[:]*pfilt[:]
@@ -122,4 +122,4 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
                 gobsfilter[itrac, :] = gobs[itrac,:]*pfilt[:]
             dobsfilter = np.fft.irfft(gobsfilter, n=ns, axis=1)
 
-    return dobsfilter
+    return dobsfilter, pfilt

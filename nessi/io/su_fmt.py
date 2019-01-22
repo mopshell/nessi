@@ -422,13 +422,18 @@ class SUdata():
         # Create a copy of the input SU data
         dobsfilter = copy.deepcopy(self)
 
+        if np.ndim(dobsfilter.trace) == 1:
+            fftaxis = 0
+        else:
+            fftaxis = 1
+
         # Get values from SU header
         dt = self.header[0]['dt']/1000000.
 
         # Apply filter
-        dobsfilter.trace = sin2filter(self.trace, freq, amps, dt, axis=1)
+        dobsfilter.trace, pfilt = sin2filter(self.trace, freq, amps, dt, axis=fftaxis)
 
-        return dobsfilter
+        return dobsfilter, pfilt
 
     def taper(self, tr1=0, tr2=0, min=0., tbeg=0., tend=0., type='linear'):
         """
@@ -847,8 +852,14 @@ class SUdata():
         # Create a copy of the input SU data
         dobsspecfx = copy.deepcopy(self)
 
+        # Get number of time samples and numner of traces
+        if np.ndim(dobsspecfx.trace) == 1:
+            fftaxis = 0
+        else:
+            fftaxis = 1
+
         # Amplitude of the real Fourier transform
-        dobsspecfx.trace = np.absolute(np.fft.rfft(self.trace, axis=1))
+        dobsspecfx.trace = np.absolute(np.fft.rfft(self.trace, axis=fftaxis))
 
         # Get the frequency vector
         ns = dobsspecfx.header[0]['ns']
@@ -941,7 +952,6 @@ def susrcinv(dcal, scal, dobs):
         dcorrected = np.float32(np.fft.irfft(gcorrected, n=ns, axis=1))
 
     # Create outputs
-    print(srcest.dtype)
     susrcest = sucreate(srcest, dt)
     sucorrected = sucreate(dcorrected, dt)
 
