@@ -523,9 +523,10 @@ class SUdata():
             header['scalel'] = 1
             self.header = header[:]
             self.trace = data[:]
+
         if data.ndim == 2:
+            self.header = np.zeros(nr, dtype=self.sutype)
             for ir in range(0, nr):
-                self.header.append(np.zeros(1, dtype=self.sutype))
                 self.header[ir]['tracl'] = int(ir+1)
                 self.header[ir]['tracf'] = int(ir+1)
                 self.header[ir]['ns'] = ns
