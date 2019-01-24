@@ -25,7 +25,7 @@ import numpy as np
 
 def lsrcinv(dcal, scal, dobs, axis=0):
     """
-    Linear source inversion using stabilized deconvolutionself.
+    Linear source inversion using stabilized deconvolution.
 
     :param dobs: observed data
     :param dcal: calculated data

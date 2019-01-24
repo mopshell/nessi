@@ -53,8 +53,9 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
 
     # Fast Fourier transform
     gobs = np.fft.rfft(dobs, axis=axis)
+    ns = np.size(dobs, axis=axis)
     nfft = np.size(gobs, axis=axis)
-    ftmp = np.fft.rfftfreq(nfft, dt)
+    ftmp = np.fft.rfftfreq(ns, dt)
     df = ftmp[1]
 
 
@@ -106,7 +107,7 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     # From the last filter frequency to the last frequency
     for ifreq in range(intfreq[-1], nfft):
         pfilt[ifreq] = amps[-1]
-        
+
     # Apply filter
     if np.ndim(dobs) == 1:
         gobsfilter[:] = gobs[:]*pfilt[:]
@@ -122,4 +123,4 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
                 gobsfilter[itrac, :] = gobs[itrac,:]*pfilt[:]
             dobsfilter = np.fft.irfft(gobsfilter, n=ns, axis=1)
 
-    return dobsfilter, pfilt
+    return dobsfilter

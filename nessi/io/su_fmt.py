@@ -338,6 +338,33 @@ class SUdata():
             wig = self.trace[itrac]/norm*d2*float(skip-1)*xcur
             plt.plot(wig+x0+float(itrac)*d2, y, color=tracecolor, linestyle=tracestyle)
 
+    def normalize(self, mode='max'):
+        """
+        Normalize traces by traces or by maximum.
+
+        :param mode: default(='max') or trace
+        """
+
+        # Create a copy of the input SU data
+        dobsnorm = copy.deepcopy(self)
+
+        if np.ndim(self.trace) == 1:
+            # One trace: norm=max
+            ampmax = np.abs(np.amax(dobsnorm.trace))
+            dobsnorm.trace[:] /= ampmax
+        else:
+            if mode == 'max':
+                ampmax = np.abs(np.amax(dobsnorm.trace[:, :]))
+                dobsnorm.trace[:, :] /= ampmax
+            if mode == 'trace':
+                ntrac = np.size(dobsnorm.trace, axis=0)
+                # Loop over traces
+                for itrac in range(0, ntrac):
+                    ampmax = np.abs(np.amax(dobsnorm.trace[itrac, :]))
+                    dobsnorm.trace[itrac, :] /= ampmax
+
+        return dobsnorm
+
     def kill(self, key=' ', a=1, min=0, count=1):
         """
         Zero out traces.
@@ -431,9 +458,9 @@ class SUdata():
         dt = self.header[0]['dt']/1000000.
 
         # Apply filter
-        dobsfilter.trace, pfilt = sin2filter(self.trace, freq, amps, dt, axis=fftaxis)
+        dobsfilter.trace = sin2filter(self.trace, freq, amps, dt, axis=fftaxis)
 
-        return dobsfilter, pfilt
+        return dobsfilter
 
     def taper(self, tr1=0, tr2=0, min=0., tbeg=0., tend=0., type='linear'):
         """
@@ -475,8 +502,8 @@ class SUdata():
             ns = np.size(data)
             nr = 1
         if data.ndim == 2:
-            nr = data.shape[0]
-            ns = data.shape[1]
+            nr = np.size(data, axis=0) #data.shape[0]
+            ns = np.size(data, axis=1) #data.shape[1]
 
         # Create
         if data.ndim == 1:
@@ -952,8 +979,8 @@ def susrcinv(dcal, scal, dobs):
         dcorrected = np.float32(np.fft.irfft(gcorrected, n=ns, axis=1))
 
     # Create outputs
-    susrcest = sucreate(srcest, dt)
-    sucorrected = sucreate(dcorrected, dt)
+    susrcest = SUdata(); susrcest.create(srcest, dt)
+    sucorrected = SUdata(); sucorrected.create(dcorrected, dt)
 
     return susrcest, sucorrected
 
