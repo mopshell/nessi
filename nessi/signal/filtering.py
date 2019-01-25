@@ -5,7 +5,7 @@
 #   Author: Damien Pageot
 #    Email: nessi.develop@protonmail.com
 #
-# Copyright (C) 2018 Damien Pageot
+# Copyright (C) 2018, 2019 Damien Pageot
 # ------------------------------------------------------------------
 """
 Data filtering functions.
@@ -28,23 +28,23 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     Applies a zero-phase, sine-squared tapered filter (adapted from the
     sufilter command - Seismic Unix 44R1).
 
-    :param dobs: --
-    :param freq: array of filter frequencies (Hz)
-    :param amps: array of filter amplitudes
-    :param dt: time sampling
+    :param dobs: input data
+    :param freq: array (1D) of filter frequencies (Hz)
+    :param amps: array (1D) of filter amplitudes
+    :param dt: time sampling in second
     :param axis: time axis if dobs is a 2D array
     """
 
 
-    # Get number of time samples and numner of traces
+    # Get number of time samples and number of traces
     if np.ndim(dobs) == 1:
         ns = np.size(dobs)
         ntrac = 1
     else:
-        if axis == 0:
+        if axis == 0: # Time axis in the first direction
             ns = np.size(dobs, axis=0)
             ntrac = np.size(dobs, axis=1)
-        if axis == 1:
+        if axis == 1: # Time axis in the second direction
             ns = np.size(dobs, axis=1)
             ntrac = np.size(dobs, axis=0)
 
@@ -53,13 +53,18 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
 
     # Fast Fourier transform
     gobs = np.fft.rfft(dobs, axis=axis)
-    ns = np.size(dobs, axis=axis)
+
+    # Get the number of frequency samples
     nfft = np.size(gobs, axis=axis)
+
+    # Get the frequency array
     ftmp = np.fft.rfftfreq(ns, dt)
+
+    # Get the frequency sampling
     df = ftmp[1]
 
 
-    # Create a gobs filter array
+    # Create a filter array
     if np.ndim(dobs) == 1:
         gobsfilter = np.zeros(nfft, dtype=np.complex64)
     else:
@@ -86,20 +91,23 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     # Middle frequencies
     for ipoly in range(0, npoly-1):
 
+        c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly])
+
+        # Increasing amplitude
         if amps[ipoly] < amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
-                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly]) #+2)
-                s = np.sin(c*float(ifreq-intfreq[ipoly])) #+1))
+                s = np.sin(c*float(ifreq-intfreq[ipoly]))
                 a = amps[ipoly+1]-amps[ipoly]
                 pfilt[ifreq] = amps[ipoly]+a*s*s
 
+        # Decreasing amplitude
         if amps[ipoly] > amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
-                c = 0.5*np.pi/float(intfreq[ipoly+1]-intfreq[ipoly])#+2)
-                s = np.sin(c*float(intfreq[ipoly]-ifreq)) #+1))
+                s = np.sin(c*float(intfreq[ipoly]-ifreq))
                 a = amps[ipoly]-amps[ipoly+1]
                 pfilt[ifreq] = amps[ipoly]-a*s*s
 
+        # Stable amplitude
         if amps[ipoly] == amps[ipoly+1]:
             for ifreq in range(intfreq[ipoly], intfreq[ipoly+1]):
                 pfilt[ifreq] = amps[ipoly]
@@ -108,7 +116,7 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     for ifreq in range(intfreq[-1], nfft):
         pfilt[ifreq] = amps[-1]
 
-    # Apply filter
+    # Apply filter and Inverse Fast Fourier Transform
     if np.ndim(dobs) == 1:
         gobsfilter[:] = gobs[:]*pfilt[:]
         dobsfilter = np.fft.irfft(gobsfilter, n=ns)

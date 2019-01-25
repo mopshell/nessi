@@ -26,6 +26,10 @@ import numpy as np
 def _linear(n, ntap1, ntap2):
     """
     Linear taper type.
+
+    :param n: taper total number of points
+    :param ntap1: number of points to taper at the begining
+    :param ntap2: number of points to tper at the end
     """
     # Initialize taper function
     ftap = np.zeros(n, dtype=np.float32)
@@ -48,6 +52,10 @@ def _linear(n, ntap1, ntap2):
 def _sine(n, ntap1, ntap2):
     """
     Sine taper type.
+
+    :param n: taper total number of points
+    :param ntap1: number of points to taper at the begining
+    :param ntap2: number of points to tper at the end
     """
     # Initialize taper function
     ftap = np.zeros(n, dtype=np.float32)
@@ -70,6 +78,10 @@ def _sine(n, ntap1, ntap2):
 def _cosine(n, ntap1, ntap2):
     """
     Cosine taper type.
+
+    :param n: taper total number of points
+    :param ntap1: number of points to taper at the begining
+    :param ntap2: number of points to tper at the end
     """
     # Initialize taper function
     ftap = np.zeros(n, dtype=np.float32)
