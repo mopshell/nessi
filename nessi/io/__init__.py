@@ -24,6 +24,8 @@ from __future__ import print_function
 from .su_fmt import SUdata
 from .su_fmt import sucreate
 from .su_fmt import susrcinv
+from .nessidata import DataStruct
+from .suformat import suread
 
 if __name__ == '__main__':
     import doctest
