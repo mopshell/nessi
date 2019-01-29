@@ -41,46 +41,33 @@ class SUdata():
         Define the Seismic Unix header.
         """
         self.sutype = np.dtype([
-            ('tracl', np.int32), ('tracr', np.int32), \
-            ('fldr', np.int32), ('tracf', np.int32), \
-            ('ep', np.int32), ('cdp', np.int32), \
-            ('cdpt', np.int32), ('trid', np.int16), \
-            ('nvs', np.int16), ('nhs', np.int16), \
-            ('duse', np.int16), ('offset', np.int32), \
-            ('gelev', np.int32), ('selev', np.int32), \
-            ('sdepth', np.int32), ('gdel', np.int32), \
-            ('sdel', np.int32), ('swdep', np.int32), \
-            ('gwdep', np.int32), ('scalel', np.int16), \
-            ('scalco', np.int16), ('sx', np.int32), \
-            ('sy', np.int32), ('gx', np.int32), \
-            ('gy', np.int32), ('counit', np.int16), \
-            ('wevel', np.int16), ('swevel', np.int16), \
-            ('sut', np.int16), ('gut', np.int16), \
-            ('sstat', np.int16), ('gstat', np.int16), \
-            ('tstat', np.int16), ('laga', np.int16), \
-            ('lagb', np.int16), ('delrt', np.int16), \
-            ('muts', np.int16), ('mute', np.int16), \
-            ('ns', np.uint16), ('dt', np.uint16), \
-            ('gain', np.int16), ('igc', np.int16), \
-            ('igi', np.int16), ('corr', np.int16), \
-            ('sfs', np.int16), ('sfe', np.int16), \
-            ('slen', np.int16), ('styp', np.int16), \
-            ('stas', np.int16), ('stae', np.int16), \
-            ('tatyp', np.int16), ('afilf', np.int16), \
-            ('afils', np.int16), ('nofilf', np.int16), \
-            ('nofils', np.int16), ('lcf', np.int16), \
-            ('hcf', np.int16), ('lcs', np.int16), \
-            ('hcs', np.int16), ('year', np.int16), \
-            ('day', np.int16), ('hour', np.int16), \
-            ('minute', np.int16), ('sec', np.int16), \
-            ('timebas', np.int16), ('trwf', np.int16), \
-            ('grnors', np.int16), ('grnofr', np.int16), \
-            ('grnlof', np.int16), ('gaps', np.int16), \
-            ('otrav', np.int16), ('d1', np.float32),\
-            ('f1', np.float32), ('d2', np.float32), \
-            ('f2', np.float32), ('ungpow', np.float32), \
-            ('unscale', np.float32), ('ntr', np.int32), \
-            ('mark', np.int16), ('shortpad', np.int16), \
+            ('tracl', np.int32), ('tracr', np.int32), ('fldr', np.int32), \
+            ('tracf', np.int32), ('ep', np.int32), ('cdp', np.int32), \
+            ('cdpt', np.int32), ('trid', np.int16), ('nvs', np.int16), \
+            ('nhs', np.int16), ('duse', np.int16), ('offset', np.int32), \
+            ('gelev', np.int32), ('selev', np.int32), ('sdepth', np.int32), \
+            ('gdel', np.int32), ('sdel', np.int32), ('swdep', np.int32), \
+            ('gwdep', np.int32), ('scalel', np.int16), ('scalco', np.int16), \
+            ('sx', np.int32), ('sy', np.int32), ('gx', np.int32), \
+            ('gy', np.int32), ('counit', np.int16), ('wevel', np.int16), \
+            ('swevel', np.int16), ('sut', np.int16), ('gut', np.int16), \
+            ('sstat', np.int16), ('gstat', np.int16), ('tstat', np.int16), \
+            ('laga', np.int16), ('lagb', np.int16), ('delrt', np.int16), \
+            ('muts', np.int16), ('mute', np.int16), ('ns', np.uint16), \
+            ('dt', np.uint16), ('gain', np.int16), ('igc', np.int16), \
+            ('igi', np.int16), ('corr', np.int16), ('sfs', np.int16), \
+            ('sfe', np.int16), ('slen', np.int16), ('styp', np.int16), \
+            ('stas', np.int16), ('stae', np.int16), ('tatyp', np.int16), \
+            ('afilf', np.int16), ('afils', np.int16), ('nofilf', np.int16), \
+            ('nofils', np.int16), ('lcf', np.int16), ('hcf', np.int16), \
+            ('lcs', np.int16), ('hcs', np.int16), ('year', np.int16), \
+            ('day', np.int16), ('hour', np.int16), ('minute', np.int16), \
+            ('sec', np.int16), ('timebas', np.int16), ('trwf', np.int16), \
+            ('grnors', np.int16), ('grnofr', np.int16), ('grnlof', np.int16), \
+            ('gaps', np.int16), ('otrav', np.int16), ('d1', np.float32),\
+            ('f1', np.float32), ('d2', np.float32),  ('f2', np.float32), \
+            ('ungpow', np.float32), ('unscale', np.float32), \
+            ('ntr', np.int32), ('mark', np.int16), ('shortpad', np.int16), \
             ('unassignedInt1', np.int32), ('unassignedInt2', np.int32), \
             ('unassignedInt3', np.int32), ('unassignedInt4', np.int32), \
             ('unassignedFloat1', np.float32), ('unassignedFloat2', np.float32), \
@@ -90,6 +77,43 @@ class SUdata():
         self.header = []
         self.trace = []
         self.endian = 'l'
+
+    def _check_format(self, filename):
+        """
+        Determine endianess, number of trace samples and number of traces.
+
+        :param filename: name of the Seismic Unix file
+        """
+
+        # Open Seismic Unix file
+        sufile = open(filename, 'rb')
+
+        # Read the Binary Seismic Unix file and get the size
+        bdata = sufile.read()
+        bsize = os.stat(filename).st_size
+
+        # Get value of ns considering 'little endian' format (nsl) and
+        # 'big endian' format (nsb).
+        nsl = np.frombuffer(bdata, dtype='<h', count=1, offset=114)[0]
+        nsb = np.frombuffer(bdata, dtype='>h', count=1, offset=114)[0]
+
+        # Determining endianess, number of samples and number of traces
+        if(bsize%((nsl*4)+240) == 0): # Little Endian Format
+            endian = 'l'
+            ns = nsl
+            ntrac = int(bsize/((nsl*4)+240))
+        else:
+            if(bsize%((nsb*4)+240) == 0): # Big Endian Format
+                endian = 'b'
+                ns = nsb
+                ntrac = int(bsize/((nsb*4)+240))
+            else:
+                sys.exit("Unable to read "+self.filename+"\n")
+
+        # Close the Seismic Unix File
+        sufile.close()
+
+        return endian, ns, ntrac
 
     def _check_endian(self):
         """
@@ -117,72 +141,39 @@ class SUdata():
         :param endian: byte order: little endian 'l', big endian 'b'.
         """
 
-        # This method can be easily simplified... for [0.3.0] version ?
-        self.filename = filename
+        # Check format
+        endian, ns, ntrac = self._check_format(filename)
 
-        if endian == ' ':
-            # Automatic checking of endianess
-            self._check_endian()
+        # Prepare
+        if endian == 'l':
+            npdtype = '<f4'
+            sudtype = self.sutype
+        else:
+            npdtype = '>f4'
+            sudtype = self.sutype.newbyteorder()
 
-        # Open the file to read
+        # Create header and traces arrays
+        self.header = np.zeros(ntrac, dtype=self.sutype)
+        self.traces = np.zeros((ntrac, ns), dtype=np.float32)
+
+        # Open the Seismic Unix file to read
         file = open(filename, 'rb')
 
-        # Get the header of the first trace (240 bytes)
-        bhdr = file.read(240)
-
-        if self.endian == 'b':
-            # Read the header of the first trace
-            hdr = np.frombuffer(bhdr, dtype=self.sutype.newbyteorder(), count=1)[0]
-            # Get the  the first trace data values
-            btrc = file.read(hdr['ns']*4)
-            trc = np.frombuffer(btrc, dtype=('>f4', hdr['ns']), count=1)[0]
-            # Save the header and the trace
-            self.header.append(hdr)
-            self.trace.append(trc)
-            # Loop over traces until end of file
-            EOF = False
-            while EOF == False:
-                try:
-                    # Get header and trace
-                    bhdr = file.read(240)
-                    btrc = file.read(hdr['ns']*4)
-                    hdr = np.frombuffer(bhdr, dtype=self.sutype.newbyteorder(), count=1)[0]
-                    trc = np.frombuffer(btrc, dtype=('>f4', hdr['ns']), count=1)[0]
-                    # Save
-                    self.header.append(hdr)
-                    self.trace.append(trc)
-                except:
-                    EOF = True
-            # Convert in numpy array format
-            self.trace = np.array(self.trace)
-            self.header = np.array(self.header)
-
-        if self.endian == 'l':
-            # Read the header of the first trace
-            hdr = np.frombuffer(bhdr, dtype=self.sutype, count=1)[0]
-            # Get the  the first trace data values
-            btrc = file.read(hdr['ns']*4)
-            trc = np.frombuffer(btrc, dtype=('<f4', hdr['ns']), count=1)[0]
-            # Save the header and the trace
-            self.header.append(hdr)
-            self.trace.append(trc)
-            # Loop over traces until end of file
-            EOF = False
-            while EOF == False:
-                try:
-                    # Get header and trace
-                    bhdr = file.read(240)
-                    btrc = file.read(hdr['ns']*4)
-                    hdr = np.frombuffer(bhdr, dtype=self.sutype, count=1)[0]
-                    trc = np.frombuffer(btrc, dtype=('<f4', hdr['ns']), count=1)[0]
-                    # Save the header and the trace
-                    self.header.append(hdr)
-                    self.trace.append(trc)
-                except:
-                    EOF = True
-            # Convert in numpy array format
-            self.header = np.array(self.header)
-            self.trace = np.array(self.trace)
+        # Get header and traces from binary format
+        for itrac in range(0, ntrac):
+            # Get header
+            bhdr = file.read(240)
+            self.header[itrac] = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
+            # Get trace
+            btrc = file.read(ns*4)
+            self.traces[itrac, :] = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
+            # TRID default value (=1 seismic data)
+            if self.header[itrac]['trid'] == 0:
+                self.header[itrac]['trid'] = 1
+            # DT default value (=0.04s)
+            if self.header[itrac]['dt'] == 0:
+                # Time sampling (default dt=0.04s)
+                self.header[itrac]['dt'] = int(0.04*1000000.)
 
     def image(self, key='tracl', bclip=None, wclip=None, clip=None, legend=0, label1=' ',
               label2=' ', title=' ', cmap='gray', style='normal', interpolation=None):

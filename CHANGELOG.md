@@ -9,12 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - linear source inversion *lsrcinv* in *nessi.signal*
 - *normalize* method for SUdata()
-- *nessidata* the NESSI data structure 
-- *suformat* a new SU format support compatible with the NESSI data structure
 
 ### Modified
 - *pfilter* method for SUdata()
 - *sin2filter* function in *filtering.py*
+- SU format support simplifications
 
 ## [0.2.2] - 2018-12-05
 
