@@ -16,30 +16,7 @@ Support of Seismic Unix format.
 import os
 import sys
 import numpy as np
-import pandas as pd
 from .nessidata import DataStruct
-
-def _check_endian(fname):
-    """
-    Check endianess (little or big)
-    """
-    file = open(fname, 'rb')
-    btmp = file.read()
-    bsize = os.stat(fname).st_size
-    nsl = np.frombuffer(btmp, dtype='<h', count=1, offset=114)[0]
-    nsb = np.frombuffer(btmp, dtype='>h', count=1, offset=114)[0]
-    if(bsize%((nsl*4)+240) == 0):
-        endian = 'l'
-        ntrac = int(bsize/((nsl*4)+240))
-    else:
-        if(bsize%((nsb*4)+240) == 0):
-            endian = 'b'
-            ntrac = int(bsize/((nsb*4)+240))
-        else:
-            sys.exit("Unable to read "+fname+"\n")
-    file.close()
-
-    return endian, ntrac
 
 def _sutype():
     """
@@ -80,39 +57,42 @@ def _sutype():
 
     return sudtype
 
-def _suhdr2dict():
+def _check_format(filename):
     """
-    Convert SU header in dictionnary for PANDAS DataFrame
+    Determine endianess, number of trace samples and number of traces.
+
+    :param filename: name of the Seismic Unix file
     """
 
-    # Dictionnary header
-    dheader = [{
-                # Identification
-                'id':np.nan,     # data identification code
-                # Timestamp
-                'date':np.nan,   # Date in YYYYMMDD format
-                'time':np.nan,   # Time in HHMMSS format
-                # Time domain data
-                'ns':np.nan,     # Number of time samples
-                'dt':np.nan,     # Time sampling
-                'delrt':np.nan,  # Delta time
-                # Data size if not time domain
-                'n1':np.nan,     # number of samples in the first dimension
-                'd1':np.nan,     # sampling in the first dimension
-                'f1':np.nan,     #
-                'n2':np.nan,     # number of sample in the second dimension
-                'd2':np.nan,     # sampling in the second dimension
-                'f2':np.nan,     #
-                # Acquisition
-                'sx':np.nan,     # source coordinate X
-                'sy':np.nan,     # source coordinate Y
-                'sz':np.nan,     # source coordinate Z (elevation)
-                'gx':np.nan,     # receiver coordinate X
-                'gy':np.nan,     # receiver coordinate Y
-                'gz':np.nan,     # receiver coordinate Z (elevation)
-                },]
+    # Open Seismic Unix file
+    sufile = open(filename, 'rb')
 
-    return dheader
+    # Read the Binary Seismic Unix file and get the size
+    bdata = sufile.read()
+    bsize = os.stat(filename).st_size
+
+    # Get value of ns considering 'little endian' format (nsl) and
+    # 'big endian' format (nsb).
+    nsl = np.frombuffer(bdata, dtype='<h', count=1, offset=114)[0]
+    nsb = np.frombuffer(bdata, dtype='>h', count=1, offset=114)[0]
+
+    # Determining endianess, number of samples and number of traces
+    if(bsize%((nsl*4)+240) == 0): # Little Endian Format
+        endian = 'l'
+        ns = nsl
+        ntrac = int(bsize/((nsl*4)+240))
+    else:
+        if(bsize%((nsb*4)+240) == 0): # Big Endian Format
+            endian = 'b'
+            ns = nsb
+            ntrac = int(bsize/((nsb*4)+240))
+        else:
+            sys.exit("Unable to read "+self.filename+"\n")
+
+    # Close the Seismic Unix File
+    sufile.close()
+
+    return endian, ns, ntrac
 
 def suread(fname):
     """
@@ -121,14 +101,13 @@ def suread(fname):
     :param fname: Seismic Unix filename and path
     """
 
+    # Check file
+    endian, ns, ntrac = _check_format(fname)
+
     # Initialize NESSI data structure
     sudata = DataStruct()
-
-    # Check endianess
-    endian, ntrac = _check_endian(fname)
-
-    # Open the file to read
-    sufile = open(fname, 'rb')
+    sudata.header.resize(ntrac) #, dtype=sudata.nessidtype)
+    sudata.traces.resize((ntrac, ns)) #, dtype=np.float32)
 
     # Endianess parameters
     if endian == 'b': # Big endian
@@ -138,85 +117,52 @@ def suread(fname):
         sudtype = _sutype()
         npdtype = '<f4'
 
-    # Get the header of the first trace (240 bytes)
-    bhdr = sufile.read(240)
-    hdr = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
-    # Get the  the first trace data values
-    btrc = sufile.read(hdr['ns']*4)
-    trc = np.frombuffer(btrc, dtype=(npdtype, hdr['ns']), count=1)[0]
 
-    # Convert first trace to NESSI data structure
-    if hdr['trid'] != 0:
-        sudata.header['id'][0] = hdr['trid']
-    else:
-        sudata.header['id'][0] = 10 # Seismic trace (default)
+    # Open the file to read
+    file = open(fname, 'rb')
 
-    # Time domain data header values
-    sudata.header['ns'] = hdr['ns']
-    sudata.header['dt'] = hdr['dt']
-    sudata.header['delrt'] = hdr['delrt']
-    # Acquisition
-    scalco = hdr['scalco']
-    if scalco == 0:
-        fscalco = 1.
-    if scalco < 0:
-        fscalco = -1./np.float(scalco)
-    if scalco > 0:
-        fscalco = np.float(scalco)
-    scalel = hdr['scalel']
-    if scalel == 0:
-        fscalel = 1.
-    if scalel < 0:
-        fscalel = -1./np.float(scalel)
-    if scalel > 0:
-        fscalel = np.float(scalel)
-    sudata.header['sx'] = hdr['sx']*fscalco
-    sudata.header['sy'] = hdr['sy']*fscalco
-    sudata.header['sz'] = hdr['selev']*fscalel
-    sudata.header['gx'] = hdr['gx']*fscalco
-    sudata.header['gy'] = hdr['gy']*fscalco
-    sudata.header['gz'] = hdr['gelev']*fscalel
+    # Loop over traces
+    for itrac in range(0, ntrac):
 
-    if ntrac > 1:
-        for itrac in range(1, ntrac):
-            dheader = _suhdr2dict()
-            sudata.header = sudata.header.append(dheader, ignore_index=True)
-            # Get the header of the first trace (240 bytes)
-            bhdr = sufile.read(240)
-            hdr = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
-            # Get the  the first trace data values
-            btrc = sufile.read(hdr['ns']*4)
-            trc = np.frombuffer(btrc, dtype=(npdtype, hdr['ns']), count=1)[0]
-            # Convert first trace to NESSI data structure
-            if hdr['trid'] != 0:
-                sudata.header['id'][itrac] = hdr['trid']
-            else:
-                sudata.header['id'][itrac] = 10 # Seismic trace (default)
+        # Get header
+        bhdr = file.read(240)
+        dhdr = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
 
-            # Time domain data header values
-            sudata.header['ns'][itrac] = hdr['ns']
-            sudata.header['dt'][itrac] = hdr['dt']
-            sudata.header['delrt'][itrac] = hdr['delrt']
-            # Acquisition
-            scalco = hdr['scalco']
-            if scalco == 0:
-                fscalco = 1.
-            if scalco < 0:
-                fscalco = -1./np.float(scalco)
-            if scalco > 0:
-                fscalco = np.float(scalco)
-            scalel = hdr['scalel']
-            if scalel == 0:
-                fscalel = 1.
-            if scalel < 0:
-                fscalel = -1./np.float(scalel)
-            if scalel > 0:
-                fscalel = np.float(scalel)
-            sudata.header['sx'][itrac] = hdr['sx']*fscalco
-            sudata.header['sy'][itrac] = hdr['sy']*fscalco
-            sudata.header['sz'][itrac] = hdr['selev']*fscalel
-            sudata.header['gx'][itrac] = hdr['gx']*fscalco
-            sudata.header['gy'][itrac] = hdr['gy']*fscalco
-            sudata.header['gz'][itrac] = hdr['gelev']*fscalel
+        # Get data
+        btrc = file.read(ns*4)
+        dtrc = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
+
+        # Convert first trace to NESSI data structure
+        sudata.header[itrac]['id'] = dhdr['trid']
+
+        # Time domain data header values
+        sudata.header[itrac]['ns'] = dhdr['ns']
+        sudata.header[itrac]['dt'] = dhdr['dt']
+        sudata.header[itrac]['delrt'] = dhdr['delrt']
+
+        # Acquisition
+        scalco = dhdr['scalco']
+        if scalco == 0:
+            fscalco = 1.
+        if scalco < 0:
+            fscalco = -1./np.float(scalco)
+        if scalco > 0:
+            fscalco = np.float(scalco)
+        scalel = dhdr['scalel']
+        if scalel == 0:
+            fscalel = 1.
+        if scalel < 0:
+            fscalel = -1./np.float(scalel)
+        if scalel > 0:
+            fscalel = np.float(scalel)
+        sudata.header[itrac]['sx'] = dhdr['sx']*fscalco
+        sudata.header[itrac]['sy'] = dhdr['sy']*fscalco
+        sudata.header[itrac]['sz'] = dhdr['selev']*fscalel
+        sudata.header[itrac]['gx'] = dhdr['gx']*fscalco
+        sudata.header[itrac]['gy'] = dhdr['gy']*fscalco
+        sudata.header[itrac]['gz'] = dhdr['gelev']*fscalel
+
+        # Data
+        sudata.traces[itrac, :] = dtrc
 
     return sudata

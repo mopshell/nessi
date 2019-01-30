@@ -9,7 +9,7 @@
 # ------------------------------------------------------------------
 
 """
-The NESSI data structure.
+Module for handling seismic dataset.
 """
 
 # Import modules
@@ -23,7 +23,7 @@ class DataStruct():
         """
 
         # Dictionnary header
-        self.nessidtype = np.dtype([
+        nessidtype = np.dtype([
                     # Identification
                     ('id', np.int16),       # data identification code
                     # Time domain data
@@ -52,8 +52,11 @@ class DataStruct():
         # Original format
         self.fileformat = ' '
 
+        # Processing history
+        self.history = ' '
+
         # Create header
-        self.header = []
+        self.header = np.zeros(1, dtype=nessidtype)
 
         # Create data array
-        self.traces = []
+        self.traces = np.zeros(1, dtype=np.float32)
