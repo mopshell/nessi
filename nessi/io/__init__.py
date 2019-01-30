@@ -25,6 +25,7 @@ from .su_fmt import SUdata
 from .su_fmt import sucreate
 from .su_fmt import susrcinv
 from .su_fmt import suread
+from .suformat import suread as suread2
 
 if __name__ == '__main__':
     import doctest

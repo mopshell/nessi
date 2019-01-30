@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Modified
 - *pfilter* method for SUdata()
 - *sin2filter* function in *filtering.py*
-- SU format support simplifications
+- SU format support simplifications:
+  - *_check_format* method replaces *_check_endian* method
+  - *suread* and *read* method
+  - *sucreate* and *create* method
 
 ## [0.2.2] - 2018-12-05
 
