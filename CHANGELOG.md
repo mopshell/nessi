@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - linear source inversion *lsrcinv* in *nessi.signal*
 - *normalize* method for SUdata()
 - *core* module folder for NESSI data structure 
+- *suformat.py* replaces *su_fmt.py*
+- *mplot* module folder for data visualization
 
 ### Modified
 - *pfilter* method for SUdata()

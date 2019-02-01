@@ -73,7 +73,6 @@ class SUdata():
             ('unassignedFloat1', np.float32), ('unassignedFloat2', np.float32), \
             ('unassignedFloat3', np.float32)])
 
-        self.filename = ' '
         self.header = []
         self.trace = []
         self.endian = 'l'
@@ -491,31 +490,49 @@ class SUdata():
         # Get size of data
         if data.ndim == 1:
             ns = np.size(data)
-            ntrac = 1
+            nr = 1
         if data.ndim == 2:
-            ntrac = np.size(data, axis=0) #data.shape[0]
+            nr = np.size(data, axis=0) #data.shape[0]
             ns = np.size(data, axis=1) #data.shape[1]
-        if data.ndim > 2:
-            print('Only 1D and 2D array can be converted to SU format')
-
-        # Create header and traces arrays
-        self.header = np.zeros(ntrac, dtype=self.sutype)
-        self.traces = data
 
         # Create
-        for itrac in range(0, ntrac):
-            self.header[itrac]['tracl'] = itrac+1
-            self.header[itrac]['tracf'] = itrac+1
-            self.header[itrac]['ns'] = ns
-            self.header[itrac]['dt'] = int(dt*1000000.)
-            self.header[itrac]['scalco'] = 1
-            self.header[itrac]['sx'] = 0
-            self.header[itrac]['sy'] = 0
-            self.header[itrac]['gx'] = 0
-            self.header[itrac]['gy'] = 0
-            self.header[itrac]['scalel'] = 1
-            self.header[itrac]['selev'] = 0
-            self.header[itrac]['gelev'] = 0
+        if data.ndim == 1:
+            #self.header.append(np.zeros(1, dtype=self.sutype))
+            header = np.zeros(1, dtype=self.sutype)
+            header['tracl'] = int(1)
+            header['tracf'] = int(1)
+            header['ns'] = ns
+            header['dt'] = int(dt*1000000.)
+            header['sx'] = 0
+            header['sy'] = 0
+            header['selev'] = 0
+            header['gx'] = int(1)
+            header['gy'] = 0
+            header['gelev'] = 0
+            header['scalco'] = 1
+            header['scalel'] = 1
+            self.header = header[:]
+            self.trace = data[:]
+
+        if data.ndim == 2:
+            self.header = np.zeros(nr, dtype=self.sutype)
+            for ir in range(0, nr):
+                self.header[ir]['tracl'] = int(ir+1)
+                self.header[ir]['tracf'] = int(ir+1)
+                self.header[ir]['ns'] = ns
+                self.header[ir]['dt'] = int(dt*1000000.)
+                self.header[ir]['sx'] = 0
+                self.header[ir]['sy'] = 0
+                self.header[ir]['selev'] = 0
+                self.header[ir]['gx'] = int(ir+1)
+                self.header[ir]['gy'] = 0
+                self.header[ir]['gelev'] = 0
+                self.header[ir]['scalco'] = 1
+                self.header[ir]['scalel'] = 1
+                self.trace.append(data[ir,:])
+
+        self.header = np.array(self.header)
+        self.trace = np.array(self.trace)
 
     def write(self, filename):
         """
@@ -528,7 +545,6 @@ class SUdata():
         if self.trace.ndim == 2:
             ntrac = np.size(self.trace, axis=0)
 
-        print(ntrac)
         # Open binary file
         file = open(filename, 'wb')
 

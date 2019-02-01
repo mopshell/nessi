@@ -16,7 +16,7 @@ Support of Seismic Unix format.
 import os
 import sys
 import numpy as np
-from .nessidata import DataStruct
+from nessi.core import Stream
 
 def _sutype():
     """
@@ -101,13 +101,17 @@ def suread(fname):
     :param fname: Seismic Unix filename and path
     """
 
+    # Test if file exist
+    
+
     # Check file
     endian, ns, ntrac = _check_format(fname)
 
-    # Initialize NESSI data structure
-    sudata = DataStruct()
-    sudata.header.resize(ntrac) #, dtype=sudata.nessidtype)
-    sudata.traces.resize((ntrac, ns)) #, dtype=np.float32)
+    # Initialize stream
+    sudata = Stream()
+    sudata.origin = fname
+    sudata.header.resize(ntrac) #, dtype=sudata.sutype)
+    sudata.traces.resize(ntrac, ns) #, dtype=np.float32)
 
     # Endianess parameters
     if endian == 'b': # Big endian
@@ -117,7 +121,6 @@ def suread(fname):
         sudtype = _sutype()
         npdtype = '<f4'
 
-
     # Open the file to read
     file = open(fname, 'rb')
 
@@ -126,43 +129,22 @@ def suread(fname):
 
         # Get header
         bhdr = file.read(240)
-        dhdr = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
+        sudata.header[itrac] = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
 
         # Get data
         btrc = file.read(ns*4)
-        dtrc = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
+        sudata.traces[itrac, :] = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
 
-        # Convert first trace to NESSI data structure
-        sudata.header[itrac]['id'] = dhdr['trid']
+        # TRID default value (=1 seismic data)
+        if sudata.header[itrac]['trid'] == 0:
+            sudata.header[itrac]['trid'] = 1
 
-        # Time domain data header values
-        sudata.header[itrac]['ns'] = dhdr['ns']
-        sudata.header[itrac]['dt'] = dhdr['dt']/1000000.
-        sudata.header[itrac]['delrt'] = dhdr['delrt']
+        # DT default value (=0.04s)
+        if sudata.header[itrac]['dt'] == 0:
+            # Time sampling (default dt=0.04s)
+            sudata.header[itrac]['dt'] = int(0.04*1000000.)
 
-        # Acquisition
-        scalco = dhdr['scalco']
-        if scalco == 0:
-            fscalco = 1.
-        if scalco < 0:
-            fscalco = -1./np.float(scalco)
-        if scalco > 0:
-            fscalco = np.float(scalco)
-        scalel = dhdr['scalel']
-        if scalel == 0:
-            fscalel = 1.
-        if scalel < 0:
-            fscalel = -1./np.float(scalel)
-        if scalel > 0:
-            fscalel = np.float(scalel)
-        sudata.header[itrac]['sx'] = dhdr['sx']*fscalco
-        sudata.header[itrac]['sy'] = dhdr['sy']*fscalco
-        sudata.header[itrac]['sz'] = dhdr['selev']*fscalel
-        sudata.header[itrac]['gx'] = dhdr['gx']*fscalco
-        sudata.header[itrac]['gy'] = dhdr['gy']*fscalco
-        sudata.header[itrac]['gz'] = dhdr['gelev']*fscalel
-
-        # Data
-        sudata.traces[itrac, :] = dtrc
+    # Close the file
+    file.close()
 
     return sudata
