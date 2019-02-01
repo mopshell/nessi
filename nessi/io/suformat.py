@@ -137,7 +137,7 @@ def suread(fname):
 
         # Time domain data header values
         sudata.header[itrac]['ns'] = dhdr['ns']
-        sudata.header[itrac]['dt'] = dhdr['dt']
+        sudata.header[itrac]['dt'] = dhdr['dt']/1000000.
         sudata.header[itrac]['delrt'] = dhdr['delrt']
 
         # Acquisition

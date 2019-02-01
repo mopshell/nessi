@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - linear source inversion *lsrcinv* in *nessi.signal*
 - *normalize* method for SUdata()
+- *core* module folder for NESSI data structure 
 
 ### Modified
 - *pfilter* method for SUdata()
