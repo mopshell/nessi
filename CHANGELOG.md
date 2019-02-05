@@ -6,12 +6,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.3.0] - YYYY-MM-DD
 
+### Notes
+This version is an important re-organization of the NESSI package and contains
+many function refactoring in modules *nessi.io* and *nessi.signal*. New modules
+have been created:
+- *nessi.core* to handle Seismic Unix CWP (rev.0) format using the new *Stream*
+  class which replaces the *SUdata* class
+- *nessi.graphics* to plot data from *Stream*
+
+Consequently, almost all original functions in *nessi.signal* have been
+removed and replaced by methods attached to the *Stream* class.
+
+Since the NESSI package is still in development, the major version value
+(see [Semantic Versioning](http://semver.org/spec/v2.0.0.html)) is not
+incremented.
+
+Given that Python 2 will not be supported after January 2020, the NESSI package
+is now developed only for Python 3.5+.
+
 ### Added
 - linear source inversion *lsrcinv* in *nessi.signal*
 - *normalize* method for SUdata()
-- *core* module folder for NESSI data structure 
+- *core* module folder for NESSI data structure
+- *Stream* class (*core* module) replaces *SUdata* class
 - *suformat.py* replaces *su_fmt.py*
-- *mplot* module folder for data visualization
+- *graphics* module folder for data visualization
+- *sugraphics.py* for SU format data visualization
+- *stacking.py* for SU format in *nessi.signal* module
+- *stack* method in *stacking.py*
 
 ### Modified
 - *pfilter* method for SUdata()
@@ -20,6 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - *_check_format* method replaces *_check_endian* method
   - *suread* and *read* method
   - *sucreate* and *create* method
+
+### Removed
+
 
 ## [0.2.2] - 2018-12-05
 

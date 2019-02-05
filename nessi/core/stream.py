@@ -17,7 +17,10 @@ import os
 import sys
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
+
+from nessi.graphics import ximage, xwigg
+from nessi.signal import stack as sustack
+from nessi.signal import time_window
 
 class Stream():
     """
@@ -105,6 +108,64 @@ class Stream():
         # Close the history log text file
         fhist.close()
 
+    def create(self, data, **options):
+        """
+        Create a stream object from a numpy array. The recommanded parameters
+        are ``trid`` and ``dt`` for time data and ``trid``, ``n1`` and ``d1``
+        for others. If no optional parameter is given, the header is filled with
+        the default parameters:
+        ``dt = 0.04 ms``
+        ``trid = 1 (seismic data)``
+        If ``trid`` is given for non time data but ``d1`` and/or ``d2`` not
+        given:
+        ``d1 = 1``
+        ``d2 = 1``
+
+        By default, for trid=1,  ``ns = np.size(data, axis=1)`` and
+        ``n1 = np.size(data, axis=1)`` for trid !=0.
+
+        Trace dependant keyword values can be set afterward.
+
+        :param data: numpy array containing the data.
+        :param trid: trace identification (default 1, seismic data)
+        :param dt: time sampling if trid=1 (default=400 µs)
+        :param d1: for trid != 1 (default=1)
+        :param d2: for trid != 1 (default=1)
+        """
+
+        # Get array size
+        if np.ndim(data) == 1:
+            ntrac = 1
+            ns = len(data)
+        if np.ndim(data) == 2:
+            ntrac = np.size(data, axis=0)
+            ns = np.size(data, axis=1)
+
+        # Create a new Stream object
+        #object = Stream()
+        self.header.resize(ntrac)
+        self.traces.resize((ntrac, ns))
+
+        # Get trace identification code
+        trid = options.get('trid', 1)
+        self.header[:]['trid'] = trid
+        if trid == 1:
+            # Get time sampling
+            dt = options.get('dt', 400)
+            self.header[:]['dt'] = dt
+        if trid != 1:
+            # Get sampling in the 1st and 2nd dimensions
+            d1 = options.get('d1', 1)
+            d2 = options.get('d2', 1)
+            self.header[:]['d1'] = d1
+            self.header[:]['d2'] = d2
+
+        # Fill traces
+        if ntrac == 1:
+            self.traces[0, :] = data[:]
+        else:
+            self.traces[:, :] = data[:, :]
+
     def write(self, fname, path='.'):
         """
         Write the stream object on disk as a Seismic Unix CWP file (rev.0).
@@ -136,157 +197,25 @@ class Stream():
         """
         return copy.deepcopy(self)
 
-    def image(self, key='tracl', bclip=None, wclip=None, clip=None, legend=0,
-        label1=' ', label2=' ', title=' ', cmap='gray', style='normal',
-        interpolation=None):
+    def wind(self, type='time', **options):
         """
-        matplotlib.pyplot.imshow adapted to plot SU files
+        Windowing traces in time or space.
 
-        :param key: header keyword (default tracl)
-        :param bclip: data values outside of [bclip,wclip] are clipped
-        :param wclip: data values outside of [bclip,wclip] are clipped
-        :param clip: clip used to determine bclip and wclip
-        :param legend: colorbar 0=no colorbar (default) 1=colorbar
-        :param label1: x-axis label
-        :param label2: y-axis label
-        :param title: title of the image
-        :param cmap: color map (defautl 'gray'): gray, jet, ...
+        :param type: 'time' (default) or 'space' windowing.
+        :param vmin: minimum value to pass (in time or space)
+        :param vmax: maximum value to pass (in time or space)
         """
 
-        # Check clip, bclip and wclip
-        if(clip == None and bclip == None and clip == None):
-            bclip = np.amin(self.traces)
-            wclip = np.amax(self.traces)
+        if type == 'time':
+            time_window(self, **options)
         else:
-            if(clip != None and bclip == None and wclip == None):
-                bclip = -1.*clip
-                wclip = clip
+            print('space window')
 
-        # Get ns and dt from header
-        ns = self.header[0]['ns']
-        dt = float(self.header[0]['dt']/1000000.)
-        if dt != 0:
-            y0 = float(self.header[0]['delrt'])/1000.
-            y1 = float(ns-1)*dt+y0
-            x0 = self.header[0][key]
-            x1 = self.header[-1][key]
+    def image(self, **options):
+        ximage(self, **options)
 
-        if self.header[0]['trid'] == 118:
-            # Get d1
-            d1 = float(self.header[0]['d1'])
-            y0 = 0.
-            y1 = float(ns-1)*d1
-            x0 = self.header[0][key]
-            x1 = self.header[-1][key]
+    def wiggle(self, **options):
+        xwigg(self, **options)
 
-        if self.header[0]['trid'] == 122:
-            # Get d1
-            d1 = float(self.header[0]['d1'])
-            y0 = 0.
-            y1 = float(ns-1)*d1
-            # Get d2
-            d2 = float(self.header[0]['d2'])
-            x0 = float(self.header[0]['f2'])
-            x1 = x0+float(len(self.header)-1)*d2
-
-        if self.header[0]['trid'] == 132:
-            # Get d1
-            d1 = float(self.header[0]['d1'])
-            y0 = float(self.header[0]['f1'])
-            y1 = y0+float(ns-1)*d1
-            # Get d2
-            d2 = float(self.header[0]['d2'])
-            x0 = float(self.header[0]['f2'])
-            x1 = x0+float(len(self.header)-1)*d2
-
-        if style == 'normal':
-            # Add labels to axes
-            plt.xlabel(label1)
-            plt.ylabel(label2)
-
-            # Add title to axis
-            plt.title(title)
-
-            # Plot surface
-            plt.imshow(self.traces.swapaxes(1,0), aspect='auto', cmap=cmap,
-                        extent=[x0, x1, y1, y0],
-                        vmin=bclip, vmax=wclip, interpolation=interpolation)
-        if style == 'masw':
-            # Add labels to axes
-            plt.xlabel(label1)
-            plt.ylabel(label2)
-
-            # Add title to axis
-            plt.title(title)
-
-            # Plot surface
-            plt.imshow(self.traces, origin='bottom-left', aspect='auto', cmap=cmap,
-                        extent=[y0, y1, x0, x1],
-                        vmin=bclip, vmax=wclip, interpolation=interpolation)
-        # Add legend
-        if legend == 1:
-            plt.colorbar()
-
-    def wiggle(self, clip=-1., key='tracl', label1=' ', label2=' ', title=' ',
-        tracecolor='black', tracestyle='-', skip=1, xcur=1):
-        """
-        Wiggle for SU files
-
-        :param clip: clip used to determine outside values to be clipped [-clip, clip]
-        :param key: header keyword (default tracl)
-        :param label1: x-axis label
-        :param label2: y-axis label
-        :param title: title of the image
-        :param tracecolor: color of the traces
-        :param tracestyle: style of the traces ('--', ':', ...)
-        :param skip: number of traces to skip for each plotted trace
-        :param xcur: factor to increase trace amplitudes on output
-        """
-
-        # Get ns and dt from header
-        ns = self.header[0]['ns']
-        dt = float(self.header[0]['dt']/1000000.)
-        ntrac = len(self.header)
-        if dt != 0:
-            y0 = float(self.header[0]['delrt'])/1000.
-            y1 = float(ns-1)*dt+y0
-            x0 = self.header[0][key]
-            x1 = self.header[-1][key]
-            d2 = 1.
-
-        if self.header[0]['trid'] == 118:
-            # Get d1
-            d1 = float(self.header[0]['d1'])
-            y0 = 0.
-            y1 = float(ns-1)*d1
-            x0 = self.header[0][key]
-            x1 = self.header[-1][key]
-
-        if self.header[0]['trid'] == 122:
-            # Get d1
-            d1 = float(self.header[0]['d1'])
-            y0 = 0.
-            y1 = float(ns-1)*d1
-            # Get d2
-            d2 = float(self.header[0]['d2'])
-            x0 = float(self.header[0]['f2'])
-            x1 = x0+float(len(self.header)-1)*d2
-
-        # Add labels
-        plt.xlabel(label1)
-        plt.ylabel(label2)
-
-        # Add axes
-        plt.title(title)
-
-        # Get the normalization parameter (for output)
-        y = np.linspace(y0, y1, ns)
-        if clip >= 0. :
-            norm = clip
-        else:
-            norm = np.amax(np.abs(self.traces))
-
-        # Plot the traces
-        for itrac in range(0, ntrac, skip):
-            wig = self.traces[itrac]/norm*d2*float(skip-1)*xcur
-            plt.plot(wig+x0+float(itrac)*d2, y, color=tracecolor, linestyle=tracestyle)
+    def stack(self, **options):
+        sustack(self, **options)

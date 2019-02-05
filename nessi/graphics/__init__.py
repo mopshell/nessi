@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # -------------------------------------------------------------------
-# Filename: Convenience import for nessi.signal
+# Filename: Core
 #   Author: Damien Pageot
 #    Email: nessi.develop@protonmail.com
 #
-# Copyright (C) 2018 Damien Pageot
+# Copyright (C) 2019 Damien Pageot
 # ------------------------------------------------------------------
 """
-Initialization file for nessi.signal.
+Initialization file for nessi.core.
 
 :copyright:
     Damien Pageot (nessi.develop@protonmail.com)
@@ -16,13 +16,12 @@ Initialization file for nessi.signal.
     (https://www.gnu.org/copyleft/lesser.html)
 """
 
-# Import nessi.signal classes and functions
-from .windowing import time_window
-from .windowing import space_window
-from .tapering import taper1d
-from .filtering import sin2filter
-from .stacking import stack
-from .sources import lsrcinv
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+# Import nessi.core classes and functions
+from .sugraphics import ximage, xwigg
 
 if __name__ == '__main__':
     import doctest

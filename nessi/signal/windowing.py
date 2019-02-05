@@ -17,46 +17,50 @@ Data windowing functions.
     (https://www.gnu.org/copyleft/lesser.html)
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import numpy as np
 
-def time_window(dobs, tmin=0.0, tmax=0.0, dt=0.01, delrt=0, axis=0):
+def time_window(object, **options):
     """
     Window traces in time.
 
-    :param dobs: input data to window
-    :param tmin: minimum time to pass (=0.0)
-    :param tmax: maximum time to pass (=0.0)
-    :param dt: time sampling (=0.01)
-    :param delrt: delay recording time (=0.0)
+    :param object: input Stream object containing traces to window.
+    :param tmin: (optional) minimum time to pass in second (default tmin=0.0).
+    :param tmax: (optional) maximum time to pass in second (default tmax=0.0).
     """
 
+    # Get number of time sample and time sampling from header
+    ns = object.header[0]['ns']
+    dt = object.header[0]['dt']/1000000.
+    delrt = object.header[0]['delrt']/1000.
+
     # Get the number of traces
-    if dobs.ndim == 1:
+    if object.traces.ndim == 1:
         ntrac = 1
-    if dobs.ndim == 2:
-        if axis == 0:
-            ntrac = np.size(dobs, axis=1)
-        else:
-            ntrac = np.size(dobs, axis=0)
+    if object.traces.ndim == 2:
+        ntrac = np.size(object.traces, axis=0)
 
-    # Calculate indices
-    itmin = int((tmin-delrt)/dt)
-    itmax = int((tmax-delrt)/dt)
+    # Get options
+    tmin = options.get('tmin', 0.)
+    tmax = options.get('tmax', 0.)
 
-    # Windowing
-    if ntrac == 1:
-        dobswind = dobs[itmin:itmax+1]
+    # Calculate the index of tmin and tmax and the size of the new data array
+    itmin = np.int((tmin-delrt)/dt)
+    itmax = np.int((tmax-delrt)/dt)
+    nsnew = itmax-itmin+1
+    if tmin < 0:
+        delrtnew = int(tmin*1000.)
     else:
-        if axis == 0:
-            dobswind = dobs[itmin:itmax+1, :]
-        if axis == 1:
-            dobswind = dobs[:, itmin:itmax+1]
+        delrtnew = 0
 
-    return dobswind
+    # Slice the data array and update the header
+    if object.traces.ndim == 1:
+        object.traces = object.traces[0, itmin:itmax+1]
+        object.header[0]['ns'] = nsnew
+        object.header[0]['delrt'] = delrtnew
+    else:
+        object.traces = object.traces[:, itmin:itmax+1]
+        object.header[:]['ns'] = nsnew
+        object.header[:]['delrt'] = delrtnew
 
 def space_window(dobs, imin=0.0, imax=0.0, axis=0):
     """
