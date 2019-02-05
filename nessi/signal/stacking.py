@@ -42,7 +42,7 @@ def stack(object, **options):
     # Stacking traces
     stacktrac = np.zeros(ns, dtype=np.float32)
     for itrac in range(0, ntrac):
-        stacktrac += object.traces[itrac,:]*weight[itrac]
+        stacktrac[:] += object.traces[itrac,:]*weight[itrac]
 
     # Mean
     if mean == True:

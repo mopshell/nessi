@@ -102,7 +102,7 @@ def suread(fname):
     """
 
     # Test if file exist
-    
+
 
     # Check file
     endian, ns, ntrac = _check_format(fname)
@@ -113,6 +113,7 @@ def suread(fname):
     sudata.header.resize(ntrac) #, dtype=sudata.sutype)
     sudata.traces.resize(ntrac, ns) #, dtype=np.float32)
 
+    print('suread', ns, len(sudata.traces[0,:]))
     # Endianess parameters
     if endian == 'b': # Big endian
         sudtype = _sutype().newbyteorder()
@@ -138,6 +139,9 @@ def suread(fname):
         # TRID default value (=1 seismic data)
         if sudata.header[itrac]['trid'] == 0:
             sudata.header[itrac]['trid'] = 1
+
+        # NS keyword header value
+        sudata.header[itrac]['ns'] = ns
 
         # DT default value (=0.04s)
         if sudata.header[itrac]['dt'] == 0:

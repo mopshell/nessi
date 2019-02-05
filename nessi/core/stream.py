@@ -128,7 +128,7 @@ class Stream():
 
         :param data: numpy array containing the data.
         :param trid: trace identification (default 1, seismic data)
-        :param dt: time sampling if trid=1 (default=400 µs)
+        :param dt: time sampling if trid=1 (default=0.01 s)
         :param d1: for trid != 1 (default=1)
         :param d2: for trid != 1 (default=1)
         """
@@ -151,12 +151,15 @@ class Stream():
         self.header[:]['trid'] = trid
         if trid == 1:
             # Get time sampling
-            dt = options.get('dt', 400)
-            self.header[:]['dt'] = dt
+            dt = options.get('dt', 0.01)
+            self.header[:]['ns'] = ns
+            self.header[:]['dt'] = int(dt*1000000.)
         if trid != 1:
             # Get sampling in the 1st and 2nd dimensions
             d1 = options.get('d1', 1)
             d2 = options.get('d2', 1)
+            self.header[:]['n1'] = ns
+            self.header[:]['n2'] = ntrac
             self.header[:]['d1'] = d1
             self.header[:]['d2'] = d2
 
