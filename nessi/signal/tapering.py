@@ -101,6 +101,47 @@ def _cosine(n, ntap1, ntap2):
 
     return ftap
 
+def time_taper(object, **options):
+    """
+    Tapering data.
+
+    :param object: the Stream object containing traces to taper
+    :param tbeg: length of taper (ms) at trace start (=0.).
+    :param tend: length of taper (ms) at trace end (=0).
+    :param type: 'linear'(default), 'sine', 'cosine'
+    """
+
+    # Get options
+    tbeg = options.get('tbeg', 0)
+    tend = options.get('tend', 0)
+    type = options.get('type', 'linear')
+
+    # Get ns and dt from header
+    ns = object.header[0]['ns']
+    dt = object.header[0]['dt']/1000000.
+
+    # Get number of traces
+    ntrac = len(object.header)
+
+    # Calculate the number of points to taper at begining and at end
+    if(tbeg !=0. or tend !=0.):
+        ntap1 = int(tbeg/1000./dt)
+        ntap2 = int(tend/1000./dt)
+
+    # Calculate the taper function
+    if type == 'linear':
+        ftap = _linear(ns, ntap1, ntap2)
+    if type == 'sine':
+        ftap = _sine(ns, ntap1, ntap2)
+    if type == 'cosine':
+        ftap = _cosine(ns, ntap1, ntap2)
+
+    print(object.header[0]['ns'], len(ftap))
+
+    # Apply the taper function
+    for itrac in range(0, ntrac):
+        object.traces[itrac, :] *= ftap[:]
+
 def taper1d(dobs, ntap1, ntap2, min=1.0, type='linear', axis=0):
     """
     Taper data.

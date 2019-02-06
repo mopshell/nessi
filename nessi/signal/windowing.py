@@ -46,7 +46,7 @@ def time_window(object, **options):
     # Calculate the index of tmin and tmax and the size of the new data array
     itmin = np.int((tmin-delrt)/dt)
     itmax = np.int((tmax-delrt)/dt)
-    nsnew = itmax-itmin+1
+    nsnew = itmax-itmin
     if tmin < 0:
         delrtnew = int(tmin*1000.)
     else:
@@ -62,18 +62,21 @@ def time_window(object, **options):
         object.header[:]['ns'] = nsnew
         object.header[:]['delrt'] = delrtnew
 
-def space_window(dobs, imin=0.0, imax=0.0, axis=0):
+def space_window(object, **options): #dobs, imin=0.0, imax=0.0, axis=0):
     """
     Window traces in space.
 
     :param dobs: input data to window
-    :param imin: minimum value of trace to pass (=0)
-    :param tmax: maximum value of trace to pass (=0)
+    :param imin: (optional) minimum value of trace to pass (=0)
+    :param tmax: (optional) maximum value of trace to pass (=0)
     """
-    # Windowing
-    if axis == 0:
-        dobswind = dobs[imin:imax+1, :]
-    if axis == 1:
-        dobswind = dobs[:, imin:imax+1]
 
-    return dobswind
+    # Get options
+    vmin = options.get('vmin', 0)
+    vmax = options.get('vmax', len(object.header))
+
+    # Windowing
+    object.header = object.header[vmin:vmax+1]
+    object.traces = object.traces[vmin:vmax+1, :]
+    for itrac in range(0, len(object.header)):
+        object.header[itrac]['tracf'] = itrac+1

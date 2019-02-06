@@ -113,7 +113,6 @@ def suread(fname):
     sudata.header.resize(ntrac) #, dtype=sudata.sutype)
     sudata.traces.resize(ntrac, ns) #, dtype=np.float32)
 
-    print('suread', ns, len(sudata.traces[0,:]))
     # Endianess parameters
     if endian == 'b': # Big endian
         sudtype = _sutype().newbyteorder()

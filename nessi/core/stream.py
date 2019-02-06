@@ -17,10 +17,12 @@ import os
 import sys
 import copy
 import numpy as np
+from scipy.signal import resample
 
 from nessi.graphics import ximage, xwigg
 from nessi.signal import stack as sustack
-from nessi.signal import time_window
+from nessi.signal import time_window, space_window
+from nessi.signal import time_taper
 
 class Stream():
     """
@@ -211,8 +213,64 @@ class Stream():
 
         if type == 'time':
             time_window(self, **options)
+        if type == 'space':
+            space_window(self, **options)
+
+    def kill(self, key=' ', a=1, min=0, count=1):
+        """
+        Zero out traces.
+        If min= is set it overrides selecting traces by header.
+
+        :param key: SU header keyword
+        :param a: header value identifying traces to kill
+        :param min: first trace to kill
+        :param count: number of traces to kill
+        """
+
+        # Get the number of traces
+        ntrac = self.traces.shape[0]
+
+        # Kill traces from min to min+icount
+        if key == ' ':
+            for icount in range(0, count):
+                if min+icount < ntrac:
+                    self.traces[min+icount, :] = 0.
+        # Kill traces with the given header value
         else:
-            print('space window')
+            if key != ' ':
+                for itrac in range(0, ntrac):
+                    if self.header[itrac][key] == a:
+                        self.traces[itrac, :] = 0.
+
+    def resample(self, nso, dto):
+        """
+        Resample data.
+        """
+        # Get values from header
+        ns = self.header[0]['ns']
+        dt = self.header[0]['dt']/1000000.
+
+        # Calculate time lenght for the old data
+        t_old = float(ns-1)*dt
+
+        # Calculate time lenght for the resampled data
+        t_resamp = float(nso-1)*dto
+
+        # Calculate the number of time samples of the old trace to resample
+        nsamp = int(t_resamp/dt)+1
+
+        # Resampling
+        if nsamp > ns:
+            print('Impossible to resample \n')
+        else:
+            if np.ndim(self.traces) == 1:
+                self.traces = resample(self.traces[:,:nsamp], num=nso)
+            else:
+                self.traces = resample(self.traces[:,:nsamp], num=nso, axis=1 )
+
+        # Edit header
+        self.header[:]['ns'] = nso
+        self.header[:]['dt'] = int(dto*1000000.)
 
     def image(self, **options):
         ximage(self, **options)
@@ -220,5 +278,33 @@ class Stream():
     def wiggle(self, **options):
         xwigg(self, **options)
 
+    def taper(self, **options):
+        time_taper(self, **options)
+
     def stack(self, **options):
         sustack(self, **options)
+
+    def normalize(self, **options):
+        """
+        Normalize traces by traces or by maximum.
+
+        :param mode: default(='max') or trace
+        """
+
+        # Get options
+        mode = options.get('mode', 'max')
+
+        if np.ndim(self.traces) == 1:
+            # One trace: norm=max
+            ampmax = np.abs(np.amax(self.traces))
+            self.trace[0, :] /= ampmax
+        else:
+            if mode == 'max':
+                ampmax = np.abs(np.amax(self.traces[:, :]))
+                self.traces[:, :] /= ampmax
+            if mode == 'trace':
+                ntrac = np.size(self.traces, axis=0)
+                # Loop over traces
+                for itrac in range(0, ntrac):
+                    ampmax = np.abs(np.amax(self.traces[itrac, :]))
+                    self.traces[itrac, :] /= ampmax
