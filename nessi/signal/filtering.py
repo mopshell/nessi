@@ -17,13 +17,9 @@ Data filtering functions.
     (https://www.gnu.org/copyleft/lesser.html)
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import numpy as np
 
-def sin2filter(dobs, freq, amps, dt, axis=0):
+def sin2filter(object, **options):
     """
     Applies a zero-phase, sine-squared tapered filter (adapted from the
     sufilter command - Seismic Unix 44R1).
@@ -31,31 +27,27 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     :param dobs: input data
     :param freq: array (1D) of filter frequencies (Hz)
     :param amps: array (1D) of filter amplitudes
-    :param dt: time sampling in second
-    :param axis: time axis if dobs is a 2D array
     """
 
+    # Get keyword values from header
+    ns = object.header[0]['ns']
+    dt = object.header[0]['dt']/1000000.
 
-    # Get number of time samples and number of traces
-    if np.ndim(dobs) == 1:
-        ns = np.size(dobs)
-        ntrac = 1
-    else:
-        if axis == 0: # Time axis in the first direction
-            ns = np.size(dobs, axis=0)
-            ntrac = np.size(dobs, axis=1)
-        if axis == 1: # Time axis in the second direction
-            ns = np.size(dobs, axis=1)
-            ntrac = np.size(dobs, axis=0)
+    # Get the number of traces
+    ntrac = len(object.header)
+
+    # Get options
+    freq = options.get('freq', [])
+    amps = options.get('amps', [])
 
     # Calculate the Nyquist frequency
     fnyq = 0.5/dt
 
     # Fast Fourier transform
-    gobs = np.fft.rfft(dobs, axis=axis)
+    gobs = np.fft.rfft(object.traces, axis=1)
 
     # Get the number of frequency samples
-    nfft = np.size(gobs, axis=axis)
+    nfft = np.size(gobs, axis=1)
 
     # Get the frequency array
     ftmp = np.fft.rfftfreq(ns, dt)
@@ -63,23 +55,13 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
     # Get the frequency sampling
     df = ftmp[1]
 
-
-    # Create a filter array
-    if np.ndim(dobs) == 1:
-        gobsfilter = np.zeros(nfft, dtype=np.complex64)
-    else:
-        if axis == 0:
-            gobsfilter = np.zeros((nfft, ntrac), dtype=np.complex64)
-        if axis == 1:
-            gobsfilter = np.zeros((ntrac, nfft), dtype=np.complex64)
-
     # Get the number of filter frequencies
     npoly = len(freq)
 
     # Integer filter frequencies
     intfreq = np.zeros(npoly, dtype=np.int)
     for ipoly in range(0, npoly):
-        intfreq[ipoly] = int(freq[ipoly]/df) #np.argmin(np.abs(ftmp-freq[ipoly]))
+        intfreq[ipoly] = int(freq[ipoly]/df)
 
     # Initialize the polygonal filter with sin^2 tapering
     pfilt = np.zeros(nfft, dtype=np.float32)
@@ -117,18 +99,7 @@ def sin2filter(dobs, freq, amps, dt, axis=0):
         pfilt[ifreq] = amps[-1]
 
     # Apply filter and Inverse Fast Fourier Transform
-    if np.ndim(dobs) == 1:
-        gobsfilter[:] = gobs[:]*pfilt[:]
-        dobsfilter = np.fft.irfft(gobsfilter, n=ns)
-    else:
-        if axis == 0:
-            for itrac in range(0, ntrac):
-                gobsfilter[:, itrac] = gobs[:, itrac]*pfilt[:]
-            dobsfilter = np.fft.irfft(gobsfilter, n=ns, axis=0)
-
-        if axis == 1:
-            for itrac in range(0, ntrac):
-                gobsfilter[itrac, :] = gobs[itrac,:]*pfilt[:]
-            dobsfilter = np.fft.irfft(gobsfilter, n=ns, axis=1)
-
-    return dobsfilter
+    gfiltered = np.zeros(nfft, dtype=np.complex64)
+    for itrac in range(0, ntrac):
+        gfiltered[:] = gobs[itrac, :]*pfilt[:]
+        object.traces[itrac, :] = np.fft.irfft(gfiltered, n=ns)

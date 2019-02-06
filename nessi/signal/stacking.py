@@ -53,10 +53,6 @@ def stack(object, **options):
     object.header[0]['tracl'] = 1
     object.header[0]['tracr'] = 1
     object.header[0]['tracf'] = 1
-    object.header[0]['ns'] = ns
-    object.header[0]['dt'] = dt
-    object.header[0]['delrt'] = delrt
-    object.header[0]['trid'] = trid
 
     # Update traces
     object.traces.resize(1, ns)

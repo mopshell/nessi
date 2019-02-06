@@ -9,7 +9,7 @@
 # ------------------------------------------------------------------
 
 """
-Module for handling seismic dataset.
+Class to handle dataset using a Seismic Unix CWP (rev.0) data structure.
 """
 
 # Import modules
@@ -23,6 +23,8 @@ from nessi.graphics import ximage, xwigg
 from nessi.signal import stack as sustack
 from nessi.signal import time_window, space_window
 from nessi.signal import time_taper
+from nessi.signal import sin2filter
+from nessi.signal import lsrcinv
 
 class Stream():
     """
@@ -116,7 +118,7 @@ class Stream():
         are ``trid`` and ``dt`` for time data and ``trid``, ``n1`` and ``d1``
         for others. If no optional parameter is given, the header is filled with
         the default parameters:
-        ``dt = 0.04 ms``
+        ``dt = 0.01 ms``
         ``trid = 1 (seismic data)``
         If ``trid`` is given for non time data but ``d1`` and/or ``d2`` not
         given:
@@ -135,40 +137,75 @@ class Stream():
         :param d2: for trid != 1 (default=1)
         """
 
-        # Get array size
+        # Get data array size and resize the stream objects header and traces
+        # If data array is one dimensional
         if np.ndim(data) == 1:
-            ntrac = 1
-            ns = len(data)
+            # Get the number of samples
+            n1 = len(data)
+            nd = 1
+            # Resize header and traces arrays
+            self.header.resize(1)
+            self.traces.resize(n1)
+        # If data array is two dimensional
         if np.ndim(data) == 2:
-            ntrac = np.size(data, axis=0)
-            ns = np.size(data, axis=1)
-
-        # Create a new Stream object
-        #object = Stream()
-        self.header.resize(ntrac)
-        self.traces.resize((ntrac, ns))
+            # Get the number of samples in each dimension
+            n2 = np.size(data, axis=0) # it corresponds to the number of traces
+            n1 = np.size(data, axis=1)
+            nd = 2
+            # Resize header and traces arrays
+            self.header.resize(n2)
+            self.traces.resize(n2, n1)
 
         # Get trace identification code
         trid = options.get('trid', 1)
-        self.header[:]['trid'] = trid
+
+        # Edit header for trace identification and trace numbering
+        if nd == 1:
+            self.header['trid'] = trid
+            self.header['tracl'] = 1
+            self.header['tracf'] = 1
+            self.header['tracr'] = 1
+        if nd == 2:
+            for i2 in range(0, n2):
+                self.header[i2]['trid'] = trid
+                self.header[i2]['tracl'] = i2+1
+                self.header[i2]['tracf'] = i2+1
+                self.header[i2]['tracr'] = i2+1
+
+        # If trid=1 (seismic data), get the time sampling
         if trid == 1:
             # Get time sampling
             dt = options.get('dt', 0.01)
-            self.header[:]['ns'] = ns
-            self.header[:]['dt'] = int(dt*1000000.)
+            # Edit header
+            if nd == 1:
+                self.header['ns'] = n1
+                self.header['dt'] = int(dt*1000000.)
+            if nd == 2:
+                self.header[:]['ns'] = n1
+                self.header[:]['dt'] = int(dt*1000000.)
+
+        # If trid !=1 (non-seismic data), get the sampling in the first
+        # (and 2nd if 2D array) dimensions
         if trid != 1:
             # Get sampling in the 1st and 2nd dimensions
             d1 = options.get('d1', 1)
             d2 = options.get('d2', 1)
-            self.header[:]['n1'] = ns
-            self.header[:]['n2'] = ntrac
-            self.header[:]['d1'] = d1
-            self.header[:]['d2'] = d2
+            # Edit header
+            if nd == 1:
+                self.header['n1'] = n1
+                self.header['n2'] = n2
+                self.header['d1'] = d1
+                self.header['d2'] = d2
+            if nd == 2:
+                self.header[:]['n1'] = n1
+                self.header[:]['n2'] = n2
+                self.header[:]['d1'] = d1
+                self.header[:]['d2'] = d2
 
         # Fill traces
-        if ntrac == 1:
-            self.traces[0, :] = data[:]
-        else:
+        if nd == 1:
+            self.traces[:] = data[:]
+        if nd == 2:
             self.traces[:, :] = data[:, :]
 
     def write(self, fname, path='.'):
@@ -178,9 +215,6 @@ class Stream():
         :param fname: output file name without the ``.su`` extension.
         :param path: path to write the file (default is the current directory)
         """
-
-        # Test if path exist
-
 
         # Open file to write
         sufile = open(path+'/'+fname+'.su', 'wb')
@@ -284,6 +318,9 @@ class Stream():
     def stack(self, **options):
         sustack(self, **options)
 
+    def pfilter(self, **options):
+        sin2filter(self, **options)
+
     def normalize(self, **options):
         """
         Normalize traces by traces or by maximum.
@@ -308,3 +345,106 @@ class Stream():
                 for itrac in range(0, ntrac):
                     ampmax = np.abs(np.amax(self.traces[itrac, :]))
                     self.traces[itrac, :] /= ampmax
+
+    def specfx(self):
+        """
+        Fourier spectrum (time to frequency) of traces using the numpy.fft functions.
+        """
+
+        # Get number of time samples and numner of traces
+        if np.ndim(self.traces) == 1:
+            fftaxis = 0
+        else:
+            fftaxis = 1
+
+        # Amplitude of the real Fourier transform
+        self.traces = np.absolute(np.fft.rfft(self.traces, axis=1)) #fftaxis))
+
+        # Get the frequency vector
+        ns = self.header[0]['ns']
+        dt = self.header[0]['dt']/1000000.
+        frqv = np.fft.rfftfreq(ns, dt)
+
+        # Update the SU header
+        self.header[:]['ns'] = len(frqv)
+        self.header[:]['d1'] = frqv[1]-frqv[0]
+        self.header[:]['dt'] = 0
+        self.header[:]['trid'] = 118 # Amplitude of complex trace from 0 to Nyquist
+
+    def specfk(self):
+        """
+        FK spectrum of traces using the numpy.fft functions.
+        """
+
+        # Get dx from header, if not set dx=1.0
+        d2 = self.header[0]['d2']
+        if d2 == 0:
+            d2 = 1.0
+        ntrac = len(self.header)
+
+        # Amplitude of the real Fourier transform
+        self.traces = np.fft.rfft(self.traces, axis=1)
+        self.traces = np.fft.fft(self.traces, axis=0)
+        self.traces = np.flip(np.fft.fftshift(self.traces, axes=0), axis=0)
+        self.traces = np.absolute(self.traces)
+
+        # Get the frequency and K vectors
+        ns = self.header[0]['ns']
+        dt = self.header[0]['dt']/1000000.
+        frqv = np.fft.rfftfreq(ns, dt)
+        wavv = np.fft.fftfreq(ntrac, d2)
+        # Centering
+        wavv = np.fft.fftshift(wavv)
+
+        # Update the SU header
+        self.header[:]['ns'] = len(frqv)
+        self.header[:]['d1'] = frqv[1]-frqv[0]
+        self.header[:]['d2'] = np.abs(wavv[1]-wavv[0])
+        self.header[:]['dt'] = 0
+        self.header[:]['f1'] = frqv[0] #frqv[1]-frqv[0]
+        self.header[:]['f2'] = wavv[0]
+        self.header[:]['trid'] = 122 # Amplitude of complex trace from 0 to Nyquist
+
+def susrcinv(dcal, scal, dobs):
+    """
+    Linear source inversion using SU files only.
+    Return the estimated source and the corrected data in SU format.
+
+    :param dcal: calculated data in SU format
+    :param dobs: observed data in SU format
+    :param scal: source used for calculated data in SU format
+    """
+
+    # SU parameters
+    ns = dcal.header['ns'][0]
+    dt = dcal.header['dt'][0]/1000000.
+
+    # Get the number of traces
+    if dobs.traces.ndim == 1:
+        ntrac = 1
+        naxis = 0
+    if dobs.traces.ndim == 2:
+        ntrac = np.size(dobs.traces, axis=0)
+        naxis = 1
+
+    # Linear source inversion
+    srcest, corrector = lsrcinv(dcal.traces, scal.traces[0,:], dobs.traces, axis=naxis)
+
+    # Calculated data correction
+    gcal = np.fft.rfft(dcal.traces, axis=naxis)
+    nw = np.size(gcal, axis=naxis)
+    if naxis == 0:
+        gcorrected = np.zeros((nw), dtype=np.complex64)
+        gcorrected[:] = gcal[:]*np.conj(corrector[:])
+        dcorrected = np.fft.irfft(gcorrected, n=ns, axis=0)
+    if naxis == 1:
+        gcorrected = np.zeros((ntrac, nw), dtype=np.complex64)
+        for itrac in range(0, ntrac):
+            gcorrected[itrac, :] = gcal[itrac, :]*np.conj(corrector[:])
+        dcorrected = np.float32(np.fft.irfft(gcorrected, n=ns, axis=1))
+
+    # Create outputs
+    susrcest = Stream(); susrcest.create(srcest, dt=dt)
+    sucorrected = Stream(); sucorrected.create(dcorrected, dt=dt)
+
+    return susrcest, sucorrected
