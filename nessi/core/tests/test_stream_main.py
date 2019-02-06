@@ -63,10 +63,10 @@ def test_stream_create_2d():
     object.create(data)
 
     # Testing the stream object members initialization
-    np.testing.assert_equal(object.header[0]['trid'], 1)
-    np.testing.assert_equal(object.header[0]['tracl'], 1)
-    np.testing.assert_equal(object.header[0]['tracr'], 1)
-    np.testing.assert_equal(object.header[0]['tracf'], 1)
+    np.testing.assert_equal(object.header[:]['trid'], np.ones(nr, dtype=np.int16))
+    np.testing.assert_equal(object.header[:]['tracl'], np.linspace(1, nr, nr, dtype=np.int32))
+    np.testing.assert_equal(object.header[:]['tracr'], np.linspace(1, nr, nr, dtype=np.int32))
+    np.testing.assert_equal(object.header[:]['tracf'], np.linspace(1, nr, nr, dtype=np.int32))
     np.testing.assert_equal(object.header[0]['ns'], ns)
     np.testing.assert_equal(object.header[0]['dt'], 0.01*1000000.)
 
