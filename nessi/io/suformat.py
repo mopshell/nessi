@@ -20,7 +20,7 @@ from nessi.core import Stream
 
 def _sutype():
     """
-    Numpy custom data type for Seismic Unix files.
+    Numpy custom data structure for Seismic Unix CWP (rev.0).
     """
     sudtype = np.dtype([
         ('tracl', np.int32), ('tracr', np.int32), ('fldr', np.int32), \

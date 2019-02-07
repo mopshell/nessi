@@ -25,6 +25,7 @@ from nessi.signal import time_window, space_window
 from nessi.signal import time_taper
 from nessi.signal import sin2filter
 from nessi.signal import lsrcinv
+from nessi.signal import avg
 
 class Stream():
     """
@@ -208,6 +209,28 @@ class Stream():
         if nd == 2:
             self.traces[:, :] = data[:, :]
 
+    def copy(self):
+        """
+        Return a copy of the Stream object.
+
+        The Stream.copy method returns a copy of the original Stream object
+        such as they are two different objects ``obj1 != obj2`` but contain
+        exactly the same informations ``obj1.header == obj2.header`` and
+        ``obj1.traces == obj2.traces``
+        """
+        return copy.deepcopy(self)
+
+    def operation(self, type=' '):
+        """
+        Call simple opertion functions to apply on data.
+
+        :param type: type of operation:
+            - 'avg': remove average value for each trace of the Stream object
+        """
+
+        if type == 'avg':
+            avg(self)
+            
     def write(self, fname, path='.'):
         """
         Write the stream object on disk as a Seismic Unix CWP file (rev.0).
@@ -222,19 +245,17 @@ class Stream():
         # Get the number of traces
         ntrac = len(self.header)
 
-        # Loop over traces
-        for itrac in range(0, ntrac):
-            sufile.write(self.header[itrac])
-            sufile.write(self.traces[itrac, :])
+        # If one trace only
+        if ntrac == 1:
+            sufile.write(self.header)
+            sufile.write(self.traces[:])
+        else:
+            for itrac in range(0, ntrac):
+                sufile.write(self.header[itrac])
+                sufile.write(self.traces[itrac, :])
 
         # Close file
         sufile.close()
-
-    def copy(self):
-        """
-        Return a copy of the Stream object.
-        """
-        return copy.deepcopy(self)
 
     def wind(self, type='time', **options):
         """

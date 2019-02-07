@@ -24,6 +24,7 @@ from .tapering import taper1d
 from .filtering import sin2filter
 from .stacking import stack
 from .sources import lsrcinv
+from .operations import avg
 
 if __name__ == '__main__':
     import doctest

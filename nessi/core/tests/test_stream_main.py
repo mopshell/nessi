@@ -30,7 +30,6 @@ def test_stream_create_1d():
     ns = 256
     data = np.ones(ns)
 
-
     # Create a new Stream object
     object = Stream()
 
@@ -69,6 +68,27 @@ def test_stream_create_2d():
     np.testing.assert_equal(object.header[:]['tracf'], np.linspace(1, nr, nr, dtype=np.int32))
     np.testing.assert_equal(object.header[0]['ns'], ns)
     np.testing.assert_equal(object.header[0]['dt'], 0.01*1000000.)
+
+def test_stream_copy():
+    """
+    Test the Stream.copy method.
+    """
+
+    # Create one-dimensionnal data of size 'ns'
+    ns = 256
+    data = np.ones(ns)
+
+    # Create a new Stream object
+    object1 = Stream()
+
+    # Create SU-like data structure from 'data' without options.
+    object1.create(data)
+
+    # Copy the STream object
+    object2 = object1.copy()
+
+    np.testing.assert_equal(object1.header, object2.header)
+    np.testing.assert_equal(object1.traces, object2.traces)
 
 if __name__ == "__main__" :
     np.testing.run_module_suite()
