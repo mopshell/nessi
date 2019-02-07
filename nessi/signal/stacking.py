@@ -56,4 +56,4 @@ def stack(object, **options):
 
     # Update traces
     object.traces.resize(1, ns)
-    object.traces[0, :]= stacktrac[:]
+    object.traces = stacktrac[:]

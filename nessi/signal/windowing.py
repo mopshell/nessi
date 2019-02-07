@@ -54,7 +54,7 @@ def time_window(object, **options):
 
     # Slice the data array and update the header
     if object.traces.ndim == 1:
-        object.traces = object.traces[0, itmin:itmax+1]
+        object.traces = object.traces[itmin:itmax]
         object.header[0]['ns'] = nsnew
         object.header[0]['delrt'] = delrtnew
     else:
@@ -76,7 +76,7 @@ def space_window(object, **options): #dobs, imin=0.0, imax=0.0, axis=0):
     vmax = options.get('vmax', len(object.header))
 
     # Windowing
-    object.header = object.header[vmin:vmax+1]
-    object.traces = object.traces[vmin:vmax+1, :]
+    object.header = object.header[vmin:vmax]
+    object.traces = object.traces[vmin:vmax, :]
     for itrac in range(0, len(object.header)):
         object.header[itrac]['tracf'] = itrac+1

@@ -125,8 +125,8 @@ def time_taper(object, **options):
 
     # Calculate the number of points to taper at begining and at end
     if(tbeg !=0. or tend !=0.):
-        ntap1 = int(tbeg/1000./dt)
-        ntap2 = int(tend/1000./dt)
+        ntap1 = int(tbeg/1000./dt)+1
+        ntap2 = int(tend/1000./dt)+1
 
     # Calculate the taper function
     if type == 'linear':
@@ -136,11 +136,12 @@ def time_taper(object, **options):
     if type == 'cosine':
         ftap = _cosine(ns, ntap1, ntap2)
 
-    print(object.header[0]['ns'], len(ftap))
-
     # Apply the taper function
-    for itrac in range(0, ntrac):
-        object.traces[itrac, :] *= ftap[:]
+    if ntrac == 1:
+        object.traces[:] *= ftap[:]
+    else:
+        for itrac in range(0, ntrac):
+            object.traces[itrac, :] *= ftap[:]
 
 def taper1d(dobs, ntap1, ntap2, min=1.0, type='linear', axis=0):
     """

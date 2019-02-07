@@ -111,7 +111,10 @@ def suread(fname):
     sudata = Stream()
     sudata.origin = fname
     sudata.header.resize(ntrac) #, dtype=sudata.sutype)
-    sudata.traces.resize(ntrac, ns) #, dtype=np.float32)
+    if ntrac == 1:
+        sudata.traces = np.zeros(ns, dtype=np.float32)
+    else:
+        sudata.traces = np.zeros((ntrac, ns), dtype=np.float32) #, dtype=np.float32)
 
     # Endianess parameters
     if endian == 'b': # Big endian
@@ -124,28 +127,49 @@ def suread(fname):
     # Open the file to read
     file = open(fname, 'rb')
 
-    # Loop over traces
-    for itrac in range(0, ntrac):
-
+    if ntrac == 1:
         # Get header
         bhdr = file.read(240)
-        sudata.header[itrac] = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
+        sudata.header[0] = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
 
         # Get data
         btrc = file.read(ns*4)
-        sudata.traces[itrac, :] = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
+        sudata.traces[:] = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
 
         # TRID default value (=1 seismic data)
-        if sudata.header[itrac]['trid'] == 0:
-            sudata.header[itrac]['trid'] = 1
+        if sudata.header[0]['trid'] == 0:
+            sudata.header[0]['trid'] = 1
 
         # NS keyword header value
-        sudata.header[itrac]['ns'] = ns
+        sudata.header[0]['ns'] = ns
 
         # DT default value (=0.04s)
-        if sudata.header[itrac]['dt'] == 0:
+        if sudata.header[0]['dt'] == 0:
             # Time sampling (default dt=0.04s)
-            sudata.header[itrac]['dt'] = int(0.04*1000000.)
+            sudata.header[0]['dt'] = int(0.04*1000000.)
+    else:
+        # Loop over traces
+        for itrac in range(0, ntrac):
+
+            # Get header
+            bhdr = file.read(240)
+            sudata.header[itrac] = np.frombuffer(bhdr, dtype=sudtype, count=1)[0]
+
+            # Get data
+            btrc = file.read(ns*4)
+            sudata.traces[itrac, :] = np.frombuffer(btrc, dtype=(npdtype, ns), count=1)[0]
+
+            # TRID default value (=1 seismic data)
+            if sudata.header[itrac]['trid'] == 0:
+                sudata.header[itrac]['trid'] = 1
+
+            # NS keyword header value
+            sudata.header[itrac]['ns'] = ns
+
+            # DT default value (=0.04s)
+            if sudata.header[itrac]['dt'] == 0:
+                # Time sampling (default dt=0.04s)
+                sudata.header[itrac]['dt'] = int(0.04*1000000.)
 
     # Close the file
     file.close()

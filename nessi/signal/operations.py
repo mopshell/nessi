@@ -43,5 +43,4 @@ def avg(object):
     if nd == 2:
         for itrac in range(0, ntrac):
             avg = np.sum(object.traces[itrac, :])/float(ns)
-            print(avg)
             object.traces[itrac, :] -= avg

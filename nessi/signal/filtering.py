@@ -29,12 +29,18 @@ def sin2filter(object, **options):
     :param amps: array (1D) of filter amplitudes
     """
 
-    # Get keyword values from header
-    ns = object.header[0]['ns']
-    dt = object.header[0]['dt']/1000000.
-
-    # Get the number of traces
-    ntrac = len(object.header)
+    # Get the number of traces, the number of sample and the time sampling
+    nd = np.ndim(object.traces)
+    if nd == 1:
+        ntrac = 1
+        ns = object.header[0]['ns']
+        dt = object.header[0]['dt']/1000000.
+        axis = 0
+    if nd == 2:
+        ntrac = len(object.header)
+        ns = object.header[0]['ns']
+        dt = object.header[0]['dt']/1000000.
+        axis = 1
 
     # Get options
     freq = options.get('freq', [])
@@ -44,10 +50,10 @@ def sin2filter(object, **options):
     fnyq = 0.5/dt
 
     # Fast Fourier transform
-    gobs = np.fft.rfft(object.traces, axis=1)
+    gobs = np.fft.rfft(object.traces, axis=axis)
 
     # Get the number of frequency samples
-    nfft = np.size(gobs, axis=1)
+    nfft = np.size(gobs, axis=axis)
 
     # Get the frequency array
     ftmp = np.fft.rfftfreq(ns, dt)
@@ -100,6 +106,10 @@ def sin2filter(object, **options):
 
     # Apply filter and Inverse Fast Fourier Transform
     gfiltered = np.zeros(nfft, dtype=np.complex64)
-    for itrac in range(0, ntrac):
-        gfiltered[:] = gobs[itrac, :]*pfilt[:]
-        object.traces[itrac, :] = np.fft.irfft(gfiltered, n=ns)
+    if nd == 1:
+        gfiltered[:] = gobs[:]*pfilt[:]
+        object.traces[:] = np.fft.irfft(gfiltered, n=ns)
+    if nd == 2:
+        for itrac in range(0, ntrac):
+            gfiltered[:] = gobs[itrac, :]*pfilt[:]
+            object.traces[itrac, :] = np.fft.irfft(gfiltered, n=ns)
