@@ -72,11 +72,16 @@ def space_window(object, **options): #dobs, imin=0.0, imax=0.0, axis=0):
     """
 
     # Get options
+    key = options.get('key', 'tracf')
     vmin = options.get('vmin', 0)
     vmax = options.get('vmax', len(object.header))
 
+    # Get trace indices corresponding to keyword values
+    imin = np.argmin(np.abs(object.header[key][:]-vmin))
+    imax = np.argmin(np.abs(object.header[key][:]-vmax))
+
     # Windowing
-    object.header = object.header[vmin:vmax]
-    object.traces = object.traces[vmin:vmax, :]
+    object.header = object.header[imin:imax]
+    object.traces = object.traces[imin:imax, :]
     for itrac in range(0, len(object.header)):
         object.header[itrac]['tracf'] = itrac+1
