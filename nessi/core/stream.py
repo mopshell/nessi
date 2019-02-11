@@ -230,7 +230,7 @@ class Stream():
 
         if type == 'avg':
             avg(self)
-            
+
     def write(self, fname, path='.'):
         """
         Write the stream object on disk as a Seismic Unix CWP file (rev.0).
@@ -449,7 +449,7 @@ def susrcinv(dcal, scal, dobs):
         naxis = 1
 
     # Linear source inversion
-    srcest, corrector = lsrcinv(dcal.traces, scal.traces[0,:], dobs.traces, axis=naxis)
+    srcest, corrector = lsrcinv(dcal.traces, scal.traces[:], dobs.traces, axis=naxis)
 
     # Calculated data correction
     gcal = np.fft.rfft(dcal.traces, axis=naxis)
