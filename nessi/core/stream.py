@@ -83,10 +83,11 @@ class Stream():
         # Orignal file
         self.origin = ''
         self.format = ''
+        self.endian = ''
 
         # Initialize empty header and traces members
-        self.header = np.zeros(1, dtype=sudtype)
-        self.traces = np.zeros(1, dtype=np.float32)
+        self.header = np.zeros(1, dtype=sudtype, order='C')
+        self.traces = np.zeros(1, dtype=np.float32, order='C')
 
         # Initialize history log member.
         self.history = '>> History log\n'
@@ -247,7 +248,7 @@ class Stream():
 
         # If one trace only
         if ntrac == 1:
-            sufile.write(self.header)
+            sufile.write(self.header[:])
             sufile.write(self.traces[:])
         else:
             for itrac in range(0, ntrac):
@@ -319,12 +320,14 @@ class Stream():
             print('Impossible to resample \n')
         else:
             if np.ndim(self.traces) == 1:
-                self.traces = resample(self.traces[:,:nsamp], num=nso)
+                traces = resample(self.traces[:,:nsamp], num=nso)
+                self.traces = traces
             else:
-                self.traces = resample(self.traces[:,:nsamp], num=nso, axis=1 )
+                traces = resample(self.traces[:,:nsamp], num=nso, axis=1 )
+                self.traces = np.ascontiguousarray(traces, dtype=np.float32)
 
         # Edit header
-        self.header[:]['ns'] = nso
+        self.header[:]['ns'] = int(nso)
         self.header[:]['dt'] = int(dto*1000000.)
 
     def image(self, **options):

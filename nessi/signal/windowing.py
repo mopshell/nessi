@@ -54,11 +54,15 @@ def time_window(object, **options):
 
     # Slice the data array and update the header
     if object.traces.ndim == 1:
-        object.traces = object.traces[itmin:itmax]
+        traces = np.zeros(nsnew, dtype=np.float32, order='C')
+        traces[:] = object.traces[itmin:itmax]
+        object.traces = traces
         object.header[0]['ns'] = nsnew
         object.header[0]['delrt'] = delrtnew
     else:
-        object.traces = object.traces[:, itmin:itmax+1]
+        traces = np.zeros((ntrac, nsnew), dtype=np.float32, order='C')
+        traces[:, :] = object.traces[:, itmin:itmax]
+        object.traces = traces
         object.header[:]['ns'] = nsnew
         object.header[:]['delrt'] = delrtnew
 

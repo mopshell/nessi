@@ -111,16 +111,18 @@ def suread(fname):
     sudata = Stream()
     sudata.origin = fname
     sudata.header.resize(ntrac) #, dtype=sudata.sutype)
+    sudata.endian = endian
+
     if ntrac == 1:
-        sudata.traces = np.zeros(ns, dtype=np.float32)
+        sudata.traces = np.zeros(ns, dtype=np.float32, order='C')
     else:
-        sudata.traces = np.zeros((ntrac, ns), dtype=np.float32) #, dtype=np.float32)
+        sudata.traces = np.zeros((ntrac, ns), dtype=np.float32, order='C') #, dtype=np.float32)
 
     # Endianess parameters
-    if endian == 'b': # Big endian
+    if sudata.endian == 'b': # Big endian
         sudtype = _sutype().newbyteorder()
         npdtype = '>f4'
-    if endian == 'l': # Little endian
+    if sudata.endian == 'l': # Little endian
         sudtype = _sutype()
         npdtype = '<f4'
 
@@ -170,6 +172,9 @@ def suread(fname):
             if sudata.header[itrac]['dt'] == 0:
                 # Time sampling (default dt=0.04s)
                 sudata.header[itrac]['dt'] = int(0.04*1000000.)
+
+    if endian == 'b':
+        sudata.header.newbyteorder()
 
     # Close the file
     file.close()
